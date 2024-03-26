@@ -2,6 +2,6 @@
 
 ## Status
 
-|             | Build Status                                                                                                        |
-|-------------|---------------------------------------------------------------------------------------------------------------------|
-| Master      | ![Java CI with Gradle](https://github.com/TaskwolfNET/taskwolf-table/workflows/Java%20CI%20with%20Gradle/badge.svg) |
+|             | Build Status                                                                                                          |
+|-------------|-----------------------------------------------------------------------------------------------------------------------|
+| Master      | ![Java CI with Gradle](https://github.com/TaskwolfNET/taskwolf-webhook/workflows/Java%20CI%20with%20Gradle/badge.svg) |
