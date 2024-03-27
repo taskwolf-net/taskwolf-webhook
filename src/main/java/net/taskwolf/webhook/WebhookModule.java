@@ -12,6 +12,9 @@ import net.taskwolf.core.module.ModuleInformation;
 import net.taskwolf.core.module.ModuleLoadPriority;
 import net.taskwolf.core.trigger.TriggerFactory;
 import net.taskwolf.core.trigger.TriggerInformation;
+import net.taskwolf.core.workflow.component.input.InputComponentSelect;
+import net.taskwolf.webhook.structure.WebhookDatabaseTable;
+import net.taskwolf.webhook.trigger.WebhookTrigger;
 import net.taskwolf.webhook.trigger.WebhookTriggerFactory;
 import org.springframework.boot.SpringApplication;
 
@@ -23,6 +26,7 @@ public final class WebhookModule extends Module {
   private Log log;
   private TriggerFactory triggerFactory;
   private AccountLink accountLink;
+  private InputComponentSelect webhookComponentSelect;
 
   public WebhookModule(Injector injector) {
     super(injector.createChildInjector(WebhookInjectionModule.create()));
@@ -35,6 +39,8 @@ public final class WebhookModule extends Module {
       injector().getInstance(WebhookContextInitializer.class));
     triggerFactory = WebhookTriggerFactory.create();
     accountLink = WebhookAccountLink.create();
+    webhookComponentSelect = WebhookComponentSelect.create(
+      injector().getInstance(WebhookDatabaseTable.class));
   }
 
   @Override
@@ -65,7 +71,7 @@ public final class WebhookModule extends Module {
 
   @Override
   public List<TriggerInformation> triggerInformation() {
-    return Lists.newArrayList();
+    return Lists.newArrayList(WebhookTrigger.information(webhookComponentSelect));
   }
 
   @Override
