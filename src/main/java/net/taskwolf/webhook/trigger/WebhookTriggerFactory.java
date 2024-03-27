@@ -10,6 +10,9 @@ public class WebhookTriggerFactory implements TriggerFactory {
   @Override
   public Trigger create(String type, String content) {
     var json = new JSONObject(content);
+    if (type.equals("webhook-trigger")) {
+      return WebhookTrigger.of(json);
+    }
     return null;
   }
 }
