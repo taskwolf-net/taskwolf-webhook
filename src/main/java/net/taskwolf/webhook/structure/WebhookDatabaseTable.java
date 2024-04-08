@@ -21,7 +21,9 @@ public final class WebhookDatabaseTable extends DatabaseTable {
     columns.add(DatabaseColumn.create("creator", DatabaseDataType.UUID));
     columns.add(DatabaseColumn.create("owner", DatabaseDataType.UUID));
     columns.add(DatabaseColumn.create("created", DatabaseDataType.BIGINT));
+    columns.add(DatabaseColumn.create("name", DatabaseDataType.TEXT));
     columns.add(DatabaseColumn.create("usages", DatabaseDataType.BIGINT));
+    columns.add(DatabaseColumn.create("key", DatabaseDataType.TEXT));
     return new WebhookDatabaseTable(connection, keyspace, TABLE_NAME, columns);
   }
 
@@ -36,19 +38,35 @@ public final class WebhookDatabaseTable extends DatabaseTable {
 
   public void insertWebhook(Webhook webhook) {
     insertWebhook(webhook.id(), webhook.creatorId(), webhook.ownerId(),
-      webhook.created(), webhook.usages());
+      webhook.created(), webhook.name(), webhook.usages(), webhook.key());
   }
 
   public void insertWebhook(
-    String id, UUID creatorId, UUID ownerId, long created, long usages
+    String id, UUID creatorId, UUID ownerId, long created, String name,
+    long usages, String key
   ) {
-    insert(DatabaseRow.of(id, creatorId, ownerId, created, usages));
+    insert(DatabaseRow.of(id, creatorId, ownerId, created, name, usages, key));
   }
 
   public void useWebhook(Webhook webhook) {
+    webhook.use();
+    updateWebhook(webhook);
+  }
+
+  public void renameWebhook(Webhook webhook, String name) {
+    webhook.rename(name);
+    updateWebhook(webhook);
+  }
+
+  public void changeWebhookKey(Webhook webhook, String key) {
+    webhook.changeKey(key);
+    updateWebhook(webhook);
+  }
+
+  private void updateWebhook(Webhook webhook) {
     update(DatabaseCell.create(webhook.id()), DatabaseRow.of(webhook.id(),
-      webhook.creatorId(), webhook.ownerId(), webhook.created(),
-      webhook.usages() + 1));
+      webhook.creatorId(), webhook.ownerId(), webhook.created(), webhook.name(),
+      webhook.usages(), webhook.key()));
   }
 
   public void deleteWebhook(String webhookId) {

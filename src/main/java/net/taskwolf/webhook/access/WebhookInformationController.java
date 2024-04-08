@@ -129,10 +129,12 @@ public final class WebhookInformationController extends TaskwolfRestController {
   ) {
     var information = Maps.<String, Object>newHashMap();
     information.put("id", webhook.id());
+    information.put("name", webhook.name());
     information.put("url", WebhookURL.create(webhook).build());
     information.put("usages", webhook.usages());
     information.put("created", timeMillisecondsToDate(webhook.created()));
     information.put("creator", creator.name());
+    information.put("key", webhook.key());
     return information;
   }
 
