@@ -22,7 +22,7 @@ public class WebhookComponentSelect implements InputComponentSelect {
   ) {
     return webhookDatabaseTable.findWebhooksByOwner(id).thenApply(webhooks ->
       webhooks.stream().map(webhook -> new JSONObject(Map.of("identifier",
-        webhook.id(), "name", String.format(WebhookURL.create(webhook).build(),
-          webhook.id()))).toString()).collect(Collectors.toList()));
+          webhook.id(), "name", webhook.name())).toString())
+        .collect(Collectors.toList()));
   }
 }
