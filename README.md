@@ -4,6 +4,6 @@ This module provides an interface between Taskwolf and other external services. 
 
 ## Status
 
-|             | Build Status                                                                                                          |
-|-------------|-----------------------------------------------------------------------------------------------------------------------|
-| Master      | ![Java CI with Gradle](https://github.com/TaskwolfNET/taskwolf-webhook/workflows/Java%20CI%20with%20Gradle/badge.svg) |
+|             | Build Status                                                                                      |
+|-------------|---------------------------------------------------------------------------------------------------|
+| Master      | ![Java CI with Gradle](https://git.taskwolf.net/root/taskwolf-webhook/badges/master/pipeline.svg) |

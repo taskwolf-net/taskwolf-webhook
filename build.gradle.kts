@@ -5,25 +5,26 @@ plugins {
 
 group = "net.taskwolf"
 version = "1.0.0-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_20
-java.targetCompatibility = JavaVersion.VERSION_20
+java.sourceCompatibility = JavaVersion.VERSION_21
+java.targetCompatibility = JavaVersion.VERSION_21
 
 publishing {
-  repositories {
-    maven {
-      name = "GitHubPackages"
-      url = uri("https://maven.pkg.github.com/TaskwolfNET/taskwolf-webhook")
-      credentials {
-        username = System.getenv("GITHUB_USERNAME")
-          ?: providers.gradleProperty("githubUsername").get()
-        password = System.getenv("GITHUB_ACCESS_TOKEN")
-          ?: providers.gradleProperty("githubAccessToken").get()
-      }
+  publications {
+    create<MavenPublication>("library") {
+      from(components["java"])
     }
   }
-  publications {
-    register<MavenPublication>("gpr") {
-      from(components["java"])
+  repositories {
+    maven {
+      url = uri("https://git.taskwolf.net/api/v4/projects/17/packages/maven")
+      credentials(HttpHeaderCredentials::class) {
+        name = "Private-Token"
+        value = System.getenv("TASKWOLF_GITLAB_PRIVATE_TOKEN") ?:
+          findProperty("taskwolfGitlabPrivateToken") as String?
+      }
+      authentication {
+        create("header", HttpHeaderAuthentication::class)
+      }
     }
   }
 }
@@ -31,13 +32,14 @@ publishing {
 repositories {
   mavenCentral()
   maven {
-    name = "GitHubPackages"
-    url = uri("https://maven.pkg.github.com/TaskwolfNET/taskwolf-core")
-    credentials {
-      username = System.getenv("GITHUB_USERNAME")
-        ?: providers.gradleProperty("githubUsername").get()
-      password = System.getenv("GITHUB_ACCESS_TOKEN")
-        ?: providers.gradleProperty("githubAccessToken").get()
+    url = uri("https://git.taskwolf.net/api/v4/projects/8/packages/maven")
+    credentials(HttpHeaderCredentials::class) {
+      name = "Private-Token"
+      value = System.getenv("TASKWOLF_GITLAB_PRIVATE_TOKEN") ?:
+        findProperty("taskwolfGitlabPrivateToken") as String?
+    }
+    authentication {
+      create("header", HttpHeaderAuthentication::class)
     }
   }
 }
@@ -57,7 +59,7 @@ dependencies {
   testCompileOnly("org.projectlombok:lombok:1.18.32")
   testAnnotationProcessor("org.projectlombok:lombok:1.18.32")
 
-  implementation("com.datastax.oss:java-driver-core:4.17.0")
+  compileOnly("com.datastax.oss:java-driver-core:4.17.0")
 
   compileOnly("org.json:json:20240303")
   compileOnly("commons-io:commons-io:2.16.0")
