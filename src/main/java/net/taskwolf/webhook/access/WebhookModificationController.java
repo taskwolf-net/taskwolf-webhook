@@ -12,8 +12,6 @@ import net.taskwolf.core.user.UserTargetDatabaseTable;
 import net.taskwolf.webhook.structure.Webhook;
 import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import net.taskwolf.webhook.structure.WebhookURL;
-import net.taskwolf.webhook.trigger.WebhookTrigger;
-import org.json.JSONObject;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Key;
@@ -87,9 +85,8 @@ public final class WebhookModificationController extends TaskwolfRestController 
     }
     var information = Map.<String, Object>of("webhookId", webhook.id(),
       "webhookUrl", WebhookURL.create(webhook).build());
-    coreModule.triggerWorkflows("webhook", "webhook-trigger", trigger ->
-      WebhookTrigger.of(new JSONObject(trigger.content())).webhookIdentifier()
-        .equals(webhook.id()), information);
+    coreModule.triggerWorkflows("webhook", "webhook-trigger",
+      "webhook=" + webhook.id(), information);
     webhookDatabaseTable.useWebhook(webhook);
   }
 

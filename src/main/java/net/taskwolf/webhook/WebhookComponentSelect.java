@@ -3,7 +3,6 @@ package net.taskwolf.webhook;
 import lombok.RequiredArgsConstructor;
 import net.taskwolf.core.workflow.component.input.InputComponentSelect;
 import net.taskwolf.webhook.structure.WebhookDatabaseTable;
-import net.taskwolf.webhook.structure.WebhookURL;
 import org.json.JSONObject;
 
 import java.util.List;
