@@ -56,6 +56,12 @@ public final class WebhookTrigger implements Trigger {
   }
 
   @Override
+  public CompletableFuture<Map<String, Object>> findContent(UUID triggerId) {
+    return contentDatabaseTable.findContent(triggerId).thenApply(row ->
+      Map.of("webhookIdentifier", row.findCell(1).uuidValue()));
+  }
+
+  @Override
   public CompletableFuture<List<UUID>> findEntries(String condition) {
     return contentDatabaseTable.findContentByCondition(condition).thenApply(
       rows -> rows.stream().map(row -> row.findCell(0).uuidValue()).toList());
