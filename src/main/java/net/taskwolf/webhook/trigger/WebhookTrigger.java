@@ -23,7 +23,7 @@ public final class WebhookTrigger implements Trigger {
     DatabaseConnection databaseConnection, DatabaseKeyspace databaseKeyspace
   ) {
     var contentColumns = Lists.<DatabaseColumn>newArrayList();
-    contentColumns.add(DatabaseColumn.create("webhook", DatabaseDataType.UUID));
+    contentColumns.add(DatabaseColumn.create("webhook", DatabaseDataType.TEXT));
     return new WebhookTrigger(webhookComponentSelect,
       TriggerContentDatabaseTable.create(databaseConnection, databaseKeyspace,
         "trigger_webhook", contentColumns));
