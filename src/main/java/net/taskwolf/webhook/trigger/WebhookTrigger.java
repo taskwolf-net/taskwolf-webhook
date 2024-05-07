@@ -63,7 +63,7 @@ public final class WebhookTrigger implements Trigger {
   @Override
   public CompletableFuture<Map<String, Object>> findContent(UUID triggerId) {
     return contentDatabaseTable.findContent(triggerId).thenApply(row ->
-      Map.of("webhookIdentifier", row.findCell(1).uuidValue()));
+      Map.of("webhookIdentifier", row.findCell(1).stringValue()));
   }
 
   @Override
