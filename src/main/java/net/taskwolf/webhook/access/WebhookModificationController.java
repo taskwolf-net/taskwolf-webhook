@@ -86,7 +86,7 @@ public final class WebhookModificationController extends TaskwolfRestController 
     var information = Map.<String, Object>of("webhookId", webhook.id(),
       "webhookUrl", WebhookURL.create(webhook).build());
     coreModule.triggerWorkflows("webhook", "webhook-trigger",
-      "webhook=" + webhook.id(), information);
+      "webhook='" + webhook.id() + "'", information);
     webhookDatabaseTable.useWebhook(webhook);
   }
 
