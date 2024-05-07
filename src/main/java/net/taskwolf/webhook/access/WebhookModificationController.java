@@ -15,9 +15,8 @@ import net.taskwolf.webhook.structure.WebhookURL;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Key;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
@@ -26,6 +25,8 @@ public final class WebhookModificationController extends TaskwolfRestController 
   private final UserTargetDatabaseTable userTargetDatabaseTable;
   private final CoreModule coreModule;
   private final Random random = new Random();
+  private final SimpleDateFormat webhookTime = new SimpleDateFormat("HH:mm:ss");
+  private final SimpleDateFormat webhookDate = new SimpleDateFormat("dd.MM.yyyy");
 
   private WebhookModificationController(
     Key secretKey, UserDatabaseTable userDatabaseTable,
@@ -37,6 +38,8 @@ public final class WebhookModificationController extends TaskwolfRestController 
     this.webhookDatabaseTable = webhookDatabaseTable;
     this.userTargetDatabaseTable = userTargetDatabaseTable;
     this.coreModule = coreModule;
+    this.webhookTime.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
+    this.webhookDate.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
   }
 
   @RequestMapping(path = "/webhook/add/", method = RequestMethod.POST)
@@ -59,32 +62,36 @@ public final class WebhookModificationController extends TaskwolfRestController 
       name, 0, createWebhookKey());
   }
 
-  @RequestMapping(path = "/webhook/trigger/{id}/", method = RequestMethod.GET)
+  @RequestMapping(path = "/webhook/trigger/{id}/", method = RequestMethod.POST)
   public void triggerWebhook(
-    HttpServletRequest request, @PathVariable("id") String id
+    HttpServletRequest request, @PathVariable("id") String id,
+    @RequestBody String payload
   ) {
     var key = request.getHeader("Authorization").replace("Bearer", "")
       .replace(" ", "");
     webhookDatabaseTable.webhookExists(id).thenAccept(exists ->
-      triggerWebhook(id, key, exists));
+      triggerWebhook(id, key, payload, exists));
   }
 
   public void triggerWebhook(
-    String webhookId, String key, boolean exists
+    String webhookId, String key, String body, boolean exists
   ) {
     if (!exists) {
       return;
     }
     webhookDatabaseTable.findWebhook(webhookId).thenAccept(webhook ->
-      triggerWebhook(webhook, key));
+      triggerWebhook(webhook, key, body));
   }
 
-  public void triggerWebhook(Webhook webhook, String key) {
+  public void triggerWebhook(Webhook webhook, String key, String body) {
     if (!webhook.key().equals(key)) {
       return;
     }
+    var time = System.currentTimeMillis();
     var information = Map.<String, Object>of("webhookId", webhook.id(),
-      "webhookUrl", WebhookURL.create(webhook).build());
+      "webhookUrl", WebhookURL.create(webhook).build(), "webhookBody", body,
+      "webhookFormattedTime", webhookTime.format(new Date(time)),
+      "webhookFormattedDate", webhookDate.format(time), "webhookUnixTime", time);
     coreModule.triggerWorkflows("webhook", "webhook-trigger",
       "webhook='" + webhook.id() + "'", information);
     webhookDatabaseTable.useWebhook(webhook);

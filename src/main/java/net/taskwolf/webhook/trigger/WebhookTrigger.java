@@ -46,6 +46,10 @@ public final class WebhookTrigger implements Trigger {
         "webhookIdentifier", "webhook.trigger.input.webhook.description", webhookComponentSelect))
       .withOutputVariable(OutputComponentVariable.create("webhook.trigger.output.webhook.id", "webhookId"))
       .withOutputVariable(OutputComponentVariable.create("webhook.trigger.output.webhook.url", "webhookUrl"))
+      .withOutputVariable(OutputComponentVariable.create("webhook.trigger.output.webhook.body", "webhookBody"))
+      .withOutputVariable(OutputComponentVariable.create("webhook.trigger.output.webhook.formatted.time", "webhookFormattedTime"))
+      .withOutputVariable(OutputComponentVariable.create("webhook.trigger.output.webhook.formatted.date", "webhookFormattedDate"))
+      .withOutputVariable(OutputComponentVariable.create("webhook.trigger.output.webhook.unix.time", "webhookUnixTime"))
       .build();
   }
 
