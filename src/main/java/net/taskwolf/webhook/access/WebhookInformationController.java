@@ -96,8 +96,8 @@ public final class WebhookInformationController extends TaskwolfRestController {
     List<UUID> ownerIds
   ) {
     var futureResponse = new CompletableFuture<List<Webhook>>();
-    AsyncListIterator.execute(ownerIds, webhookDatabaseTable::findWebhooksByOwner,
-      ownerIds.size(), futureResponse::complete);
+    AsyncListIterator.execute(ownerIds, webhookDatabaseTable::findWebhooksByOwner)
+      .thenAccept(futureResponse::complete);
     return futureResponse;
   }
 
@@ -109,7 +109,7 @@ public final class WebhookInformationController extends TaskwolfRestController {
         Lists.newArrayList()));
     }
     var futureResponse = new CompletableFuture<Map<String, Object>>();
-    AsyncIterator.execute(webhooks, this::gatherWebhookInformation, webhooks.size(),
+    AsyncIterator.execute(webhooks, this::gatherWebhookInformation).thenAccept(
       information -> futureResponse.complete(Map.of("webhooks", information)));
     return futureResponse;
   }
