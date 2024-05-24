@@ -1,6 +1,7 @@
 package net.taskwolf.webhook;
 
 import lombok.RequiredArgsConstructor;
+import net.taskwolf.core.user.User;
 import net.taskwolf.core.workflow.component.input.InputComponentSelect;
 import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import org.json.JSONObject;
@@ -17,7 +18,7 @@ public class WebhookComponentSelect implements InputComponentSelect {
 
   @Override
   public CompletableFuture<List<String>> compile(
-    UUID id, Map<String, String> previousInputs
+    User user, UUID id, Map<String, String> previousInputs
   ) {
     return webhookDatabaseTable.findWebhooksByOwner(id).thenApply(webhooks ->
       webhooks.stream().map(webhook -> new JSONObject(Map.of("identifier",
