@@ -1,4 +1,4 @@
-package net.taskwolf.webhook;
+package net.taskwolf.webhook.select;
 
 import lombok.RequiredArgsConstructor;
 import net.taskwolf.core.user.User;

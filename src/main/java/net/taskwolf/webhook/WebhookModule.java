@@ -12,6 +12,9 @@ import net.taskwolf.core.module.ModuleInformation;
 import net.taskwolf.core.module.ModuleLoadPriority;
 import net.taskwolf.core.trigger.TriggerRepository;
 import net.taskwolf.core.workflow.component.input.InputComponentSelect;
+import net.taskwolf.webhook.action.WebhookAction;
+import net.taskwolf.webhook.select.WebhookComponentSelect;
+import net.taskwolf.webhook.select.WebhookMethodComponentSelect;
 import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import net.taskwolf.webhook.trigger.WebhookTrigger;
 import org.springframework.boot.SpringApplication;
@@ -22,6 +25,7 @@ public final class WebhookModule extends Module {
   private Log log;
   private AccountLink accountLink;
   private InputComponentSelect webhookComponentSelect;
+  private InputComponentSelect webhookMethodComponentSelect;
 
   public WebhookModule(Injector injector) {
     super(injector.createChildInjector(WebhookInjectionModule.create()));
@@ -35,6 +39,7 @@ public final class WebhookModule extends Module {
     accountLink = WebhookAccountLink.create();
     webhookComponentSelect = WebhookComponentSelect.create(
       injector().getInstance(WebhookDatabaseTable.class));
+    webhookMethodComponentSelect = WebhookMethodComponentSelect.create();
   }
 
   @Override
@@ -65,6 +70,11 @@ public final class WebhookModule extends Module {
 
   @Override
   public ActionRepository actionRepository() {
-    return ActionRepository.create();
+    var databaseConnection = injector().getInstance(DatabaseConnection.class);
+    var databaseKeyspace = injector().getInstance(DatabaseKeyspace.class);
+    var repository = ActionRepository.create();
+    repository.registerAction(WebhookAction.create(webhookMethodComponentSelect,
+      databaseConnection, databaseKeyspace));
+    return repository;
   }
 }
