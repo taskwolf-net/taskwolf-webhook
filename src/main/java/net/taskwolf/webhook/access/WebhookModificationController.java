@@ -63,30 +63,41 @@ public final class WebhookModificationController extends TaskwolfRestController 
   }
 
   @RequestMapping(path = "/webhook/trigger/{id}/", method = RequestMethod.POST)
-  public void triggerWebhook(
+  public CompletableFuture<Void> triggerWebhook(
     HttpServletRequest request, @PathVariable("id") String id,
-    @RequestBody String payload
+    @RequestBody String payload, HttpServletResponse response
   ) {
     var key = request.getHeader("Authorization").replace("Bearer", "")
       .replace(" ", "");
-    webhookDatabaseTable.webhookExists(id).thenAccept(exists ->
-      triggerWebhook(id, key, payload, exists));
+    return webhookDatabaseTable.webhookExists(id).thenCompose(exists ->
+      triggerWebhook(id, key, payload, exists, response));
+  }
+
+  public CompletableFuture<Void> triggerWebhook(
+    String webhookId, String key, String body, boolean exists,
+    HttpServletResponse response
+  ) {
+    if (!exists) {
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      return CompletableFuture.completedFuture(null);
+    }
+    return webhookDatabaseTable.findWebhook(webhookId).thenAccept(webhook ->
+      triggerWebhook(webhook, key, body, response));
   }
 
   public void triggerWebhook(
-    String webhookId, String key, String body, boolean exists
+    Webhook webhook, String key, String body, HttpServletResponse response
   ) {
-    if (!exists) {
+    if (!webhook.key().equals(key)) {
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
       return;
     }
-    webhookDatabaseTable.findWebhook(webhookId).thenAccept(webhook ->
-      triggerWebhook(webhook, key, body));
+    triggerWebhook(webhook, body);
   }
 
-  public void triggerWebhook(Webhook webhook, String key, String body) {
-    if (!webhook.key().equals(key)) {
-      return;
-    }
+  public void triggerWebhook(
+    Webhook webhook, String body
+  ) {
     var time = System.currentTimeMillis();
     var information = Map.<String, Object>of("webhookId", webhook.id(),
       "webhookUrl", WebhookURL.create(webhook).build(), "webhookBody", body,
