@@ -12,6 +12,7 @@ import net.taskwolf.core.user.UserTargetDatabaseTable;
 import net.taskwolf.webhook.structure.Webhook;
 import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import net.taskwolf.webhook.structure.WebhookURL;
+import net.taskwolf.core.bundle.BundleDatabaseTable;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Key;
@@ -23,6 +24,7 @@ import java.util.concurrent.CompletableFuture;
 public final class WebhookModificationController extends TaskwolfRestController {
   private final WebhookDatabaseTable webhookDatabaseTable;
   private final UserTargetDatabaseTable userTargetDatabaseTable;
+  private final BundleDatabaseTable bundleDatabaseTable;
   private final CoreModule coreModule;
   private final Random random = new Random();
   private final SimpleDateFormat webhookTime = new SimpleDateFormat("HH:mm:ss");
@@ -32,31 +34,46 @@ public final class WebhookModificationController extends TaskwolfRestController 
     Key secretKey, UserDatabaseTable userDatabaseTable,
     WebhookDatabaseTable webhookDatabaseTable,
     UserTargetDatabaseTable userTargetDatabaseTable,
-    CoreModule coreModule
+    BundleDatabaseTable bundleDatabaseTable, CoreModule coreModule
   ) {
     super(secretKey, userDatabaseTable);
     this.webhookDatabaseTable = webhookDatabaseTable;
     this.userTargetDatabaseTable = userTargetDatabaseTable;
+    this.bundleDatabaseTable = bundleDatabaseTable;
     this.coreModule = coreModule;
     this.webhookTime.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
     this.webhookDate.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
   }
 
   @RequestMapping(path = "/webhook/add/", method = RequestMethod.POST)
-  public void addWebhook(
+  public CompletableFuture<Void> addWebhook(
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
     var body = TaskwolfRequestBody.of(payload, response);
-    findUser(request).thenAccept(user ->
-      userTargetDatabaseTable.findTargetSecured(user.id()).thenAccept(target ->
-        webhookDatabaseTable.generateAvailableWebhookId().thenAccept(id ->
-          addWebhook(user, target, body.getString("name"), id))));
+    return findUser(request).thenCompose(user ->
+      userTargetDatabaseTable.findTargetSecured(user.id()).thenCompose(target ->
+        webhookDatabaseTable.generateAvailableWebhookId().thenCompose(id ->
+          checkWebhookNumberLimit(target).thenAccept(limitReached ->
+            addWebhook(user, target, body.getString("name"), id, limitReached,
+              response)))));
+  }
+
+  private CompletableFuture<Boolean> checkWebhookNumberLimit(UUID target) {
+    return bundleDatabaseTable.findBundle(target).thenCompose(bundle ->
+      webhookDatabaseTable.findWebhooksByOwner(target).thenApply(
+        webhooks -> bundle.webhookNumberLimit() > 0 &&
+          webhooks.size() >= bundle.webhookNumberLimit()));
   }
 
   private void addWebhook(
-    User creator, UUID ownerId, String name, String webhookId
+    User creator, UUID ownerId, String name, String webhookId,
+    boolean limitReached, HttpServletResponse response
   ) {
+    if (limitReached) {
+      response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+      return;
+    }
     var created = System.currentTimeMillis();
     webhookDatabaseTable.insertWebhook(webhookId, creator.id(), ownerId, created,
       name, 0, createWebhookKey());
