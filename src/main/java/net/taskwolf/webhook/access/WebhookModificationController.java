@@ -1,11 +1,13 @@
 package net.taskwolf.webhook.access;
 
-import com.google.common.collect.Maps;
+import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.taskwolf.core.CoreModule;
 import net.taskwolf.core.access.TaskwolfRequestBody;
-import net.taskwolf.core.access.TaskwolfRestController;
+import net.taskwolf.core.iterator.AsyncIterator;
+import net.taskwolf.core.organization.team.Team;
+import net.taskwolf.core.organization.team.TeamDatabaseTable;
 import net.taskwolf.core.organization.team.TeamTargetDatabaseTable;
 import net.taskwolf.core.user.User;
 import net.taskwolf.core.user.UserDatabaseTable;
@@ -20,10 +22,12 @@ import java.security.Key;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
 @RestController
 public final class WebhookModificationController extends WebhookController {
   private final BundleDatabaseTable bundleDatabaseTable;
+  private final TeamDatabaseTable teamDatabaseTable;
   private final CoreModule coreModule;
   private final Random random = new Random();
   private final SimpleDateFormat webhookTime = new SimpleDateFormat("HH:mm:ss");
@@ -34,11 +38,13 @@ public final class WebhookModificationController extends WebhookController {
     WebhookDatabaseTable webhookDatabaseTable,
     UserTargetDatabaseTable userTargetDatabaseTable,
     TeamTargetDatabaseTable teamTargetDatabaseTable,
-    BundleDatabaseTable bundleDatabaseTable, CoreModule coreModule
+    BundleDatabaseTable bundleDatabaseTable, TeamDatabaseTable teamDatabaseTable,
+    CoreModule coreModule
   ) {
     super(secretKey, userDatabaseTable, webhookDatabaseTable,
       userTargetDatabaseTable, teamTargetDatabaseTable);
     this.bundleDatabaseTable = bundleDatabaseTable;
+    this.teamDatabaseTable = teamDatabaseTable;
     this.coreModule = coreModule;
     this.webhookTime.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
     this.webhookDate.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
@@ -54,7 +60,7 @@ public final class WebhookModificationController extends WebhookController {
       userTargetDatabaseTable().findTargetSecured(user.id()).thenCompose(target ->
         findWebhookOwner(user, target).thenCompose(owner ->
           webhookDatabaseTable().generateAvailableWebhookId().thenCompose(id ->
-            checkWebhookNumberLimit(target).thenAccept(limitReached ->
+            checkWebhookNumberLimit(user, target).thenAccept(limitReached ->
               addWebhook(user, owner, body.getString("name"), id, limitReached,
                 response))))));
   }
@@ -66,11 +72,22 @@ public final class WebhookModificationController extends WebhookController {
         .thenApply(team -> team.orElse(target));
   }
 
-  private CompletableFuture<Boolean> checkWebhookNumberLimit(UUID target) {
-    return bundleDatabaseTable.findBundle(target).thenCompose(bundle ->
-      webhookDatabaseTable().findWebhooksByOwner(target).thenApply(
-        webhooks -> bundle.webhookNumberLimit() > 0 &&
-          webhooks.size() >= bundle.webhookNumberLimit()));
+  private CompletableFuture<Boolean> checkWebhookNumberLimit(User user, UUID target) {
+    return findOwnersOfTarget(user, target)
+      .thenCompose(owners -> AsyncIterator.execute(owners, owner ->
+          webhookDatabaseTable().findWebhooksByOwner(owner).thenApply(List::size))
+        .thenApply(sizes -> sizes.stream().mapToInt(Integer::intValue).sum())
+        .thenCompose(number -> bundleDatabaseTable.findBundle(target)
+          .thenApply(bundle ->  bundle.webhookNumberLimit() > 0 &&
+            number >= bundle.webhookNumberLimit())));
+  }
+
+  private CompletableFuture<List<UUID>> findOwnersOfTarget(User user, UUID target) {
+    return user.id().equals(target) ?
+      CompletableFuture.completedFuture(Lists.newArrayList(target)) :
+      teamDatabaseTable.findTeamsByOrganization(target).thenApply(teams ->
+        Stream.concat(teams.stream().map(Team::id).toList().stream(),
+          Stream.of(target)).toList());
   }
 
   private void addWebhook(
