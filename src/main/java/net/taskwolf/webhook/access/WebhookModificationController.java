@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import net.taskwolf.core.CoreModule;
 import net.taskwolf.core.access.TaskwolfRequestBody;
 import net.taskwolf.core.access.TaskwolfRestController;
+import net.taskwolf.core.organization.team.TeamTargetDatabaseTable;
 import net.taskwolf.core.user.User;
 import net.taskwolf.core.user.UserDatabaseTable;
 import net.taskwolf.core.user.UserTargetDatabaseTable;
@@ -21,9 +22,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-public final class WebhookModificationController extends TaskwolfRestController {
-  private final WebhookDatabaseTable webhookDatabaseTable;
-  private final UserTargetDatabaseTable userTargetDatabaseTable;
+public final class WebhookModificationController extends WebhookController {
   private final BundleDatabaseTable bundleDatabaseTable;
   private final CoreModule coreModule;
   private final Random random = new Random();
@@ -34,11 +33,11 @@ public final class WebhookModificationController extends TaskwolfRestController 
     Key secretKey, UserDatabaseTable userDatabaseTable,
     WebhookDatabaseTable webhookDatabaseTable,
     UserTargetDatabaseTable userTargetDatabaseTable,
+    TeamTargetDatabaseTable teamTargetDatabaseTable,
     BundleDatabaseTable bundleDatabaseTable, CoreModule coreModule
   ) {
-    super(secretKey, userDatabaseTable);
-    this.webhookDatabaseTable = webhookDatabaseTable;
-    this.userTargetDatabaseTable = userTargetDatabaseTable;
+    super(secretKey, userDatabaseTable, webhookDatabaseTable,
+      userTargetDatabaseTable, teamTargetDatabaseTable);
     this.bundleDatabaseTable = bundleDatabaseTable;
     this.coreModule = coreModule;
     this.webhookTime.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
@@ -52,16 +51,24 @@ public final class WebhookModificationController extends TaskwolfRestController 
   ) {
     var body = TaskwolfRequestBody.of(payload, response);
     return findUser(request).thenCompose(user ->
-      userTargetDatabaseTable.findTargetSecured(user.id()).thenCompose(target ->
-        webhookDatabaseTable.generateAvailableWebhookId().thenCompose(id ->
-          checkWebhookNumberLimit(target).thenAccept(limitReached ->
-            addWebhook(user, target, body.getString("name"), id, limitReached,
-              response)))));
+      userTargetDatabaseTable().findTargetSecured(user.id()).thenCompose(target ->
+        findWebhookOwner(user, target).thenCompose(owner ->
+          webhookDatabaseTable().generateAvailableWebhookId().thenCompose(id ->
+            checkWebhookNumberLimit(target).thenAccept(limitReached ->
+              addWebhook(user, owner, body.getString("name"), id, limitReached,
+                response))))));
+  }
+
+  private CompletableFuture<UUID> findWebhookOwner(User user, UUID target) {
+    return user.id().equals(target) ?
+      CompletableFuture.completedFuture(target) :
+      teamTargetDatabaseTable().findTargetSecured(user.id())
+        .thenApply(team -> team.orElse(target));
   }
 
   private CompletableFuture<Boolean> checkWebhookNumberLimit(UUID target) {
     return bundleDatabaseTable.findBundle(target).thenCompose(bundle ->
-      webhookDatabaseTable.findWebhooksByOwner(target).thenApply(
+      webhookDatabaseTable().findWebhooksByOwner(target).thenApply(
         webhooks -> bundle.webhookNumberLimit() > 0 &&
           webhooks.size() >= bundle.webhookNumberLimit()));
   }
@@ -75,7 +82,7 @@ public final class WebhookModificationController extends TaskwolfRestController 
       return;
     }
     var created = System.currentTimeMillis();
-    webhookDatabaseTable.insertWebhook(webhookId, creator.id(), ownerId, created,
+    webhookDatabaseTable().insertWebhook(webhookId, creator.id(), ownerId, created,
       name, 0, createWebhookKey());
   }
 
@@ -86,7 +93,7 @@ public final class WebhookModificationController extends TaskwolfRestController 
   ) {
     var key = request.getHeader("Authorization").replace("Bearer", "")
       .replace(" ", "");
-    return webhookDatabaseTable.webhookExists(id).thenCompose(exists ->
+    return webhookDatabaseTable().webhookExists(id).thenCompose(exists ->
       triggerWebhook(id, key, payload, exists, response));
   }
 
@@ -98,7 +105,7 @@ public final class WebhookModificationController extends TaskwolfRestController 
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
       return CompletableFuture.completedFuture(null);
     }
-    return webhookDatabaseTable.findWebhook(webhookId).thenAccept(webhook ->
+    return webhookDatabaseTable().findWebhook(webhookId).thenAccept(webhook ->
       triggerWebhook(webhook, key, body, response));
   }
 
@@ -122,7 +129,7 @@ public final class WebhookModificationController extends TaskwolfRestController 
       "webhookFormattedDate", webhookDate.format(time), "webhookUnixTime", time);
     coreModule.triggerWorkflows("webhook", "webhook-trigger",
       "webhook='" + webhook.id() + "'", information);
-    webhookDatabaseTable.useWebhook(webhook);
+    webhookDatabaseTable().useWebhook(webhook);
   }
 
   @RequestMapping(path = "/webhook/rename/", method = RequestMethod.POST)
@@ -132,28 +139,9 @@ public final class WebhookModificationController extends TaskwolfRestController 
   ) {
     var body = TaskwolfRequestBody.of(payload, response);
     var webhookId = body.getString("webhook");
-    findUser(request).thenAccept(user ->
-      webhookDatabaseTable.webhookExists(webhookId).thenAccept(exists ->
-        renameWebhook(user, webhookId, body.getString("name"), exists)));
-  }
-
-  private void renameWebhook(
-    User user, String webhookId, String name, boolean webhookExists
-  ) {
-    if (!webhookExists) {
-      return;
-    }
-    webhookDatabaseTable.findWebhook(webhookId).thenAccept(webhook ->
-      renameWebhook(user, webhook, name));
-  }
-
-  private void renameWebhook(
-    User user, Webhook webhook, String name
-  ) {
-    if (!checkWebhookAuthorization(user, webhook)) {
-      return;
-    }
-    webhookDatabaseTable.renameWebhook(webhook, name);
+    performWebhookOperation(findUserId(request), body.getString("webhook"),
+      webhook -> webhookDatabaseTable().renameWebhook(webhook,
+        body.getString("name")), () -> {});
   }
 
   @RequestMapping(path = "/webhook/key/regenerate/", method = RequestMethod.POST)
@@ -162,30 +150,18 @@ public final class WebhookModificationController extends TaskwolfRestController 
     HttpServletResponse response
   ) {
     var body = TaskwolfRequestBody.of(payload, response);
-    var webhookId = body.getString("webhook");
-    return findUser(request).thenCompose(user ->
-      webhookDatabaseTable.webhookExists(webhookId).thenCompose(exists ->
-        regenerateWebhookKey(user, webhookId, exists)));
-  }
-
-  private CompletableFuture<Map<String, Object>> regenerateWebhookKey(
-    User user, String webhookId, boolean webhookExists
-  ) {
-    if (!webhookExists) {
-      return CompletableFuture.completedFuture(Maps.newHashMap());
-    }
-    return webhookDatabaseTable.findWebhook(webhookId).thenApply(webhook ->
-      regenerateWebhookKey(user, webhook));
+    var futureResponse = new CompletableFuture<Map<String, Object>>();
+    performWebhookOperation(findUserId(request), body.getString("webhook"),
+      webhook -> futureResponse.complete(regenerateWebhookKey(webhook)),
+      () -> {});
+    return futureResponse;
   }
 
   private Map<String, Object> regenerateWebhookKey(
-    User user, Webhook webhook
+    Webhook webhook
   ) {
-    if (!checkWebhookAuthorization(user, webhook)) {
-      return Maps.newHashMap();
-    }
     var key = createWebhookKey();
-    webhookDatabaseTable.changeWebhookKey(webhook, key);
+    webhookDatabaseTable().changeWebhookKey(webhook, key);
     return Map.of("key", key);
   }
 
@@ -205,33 +181,7 @@ public final class WebhookModificationController extends TaskwolfRestController 
     HttpServletResponse response
   ) {
     var body = TaskwolfRequestBody.of(payload, response);
-    var webhookId = body.getString("webhook");
-    findUser(request).thenAccept(user ->
-      webhookDatabaseTable.webhookExists(webhookId).thenAccept(exists ->
-        deleteWebhook(user, webhookId, exists)));
-  }
-
-  private void deleteWebhook(User user, String webhookId, boolean webhookExists) {
-    if (!webhookExists) {
-      return;
-    }
-    webhookDatabaseTable.findWebhook(webhookId).thenAccept(webhook ->
-      deleteWebhook(user, webhook));
-  }
-
-  private void deleteWebhook(User user, Webhook webhook) {
-    if (!checkWebhookAuthorization(user, webhook)) {
-      return;
-    }
-    webhookDatabaseTable.deleteWebhook(webhook.id());
-  }
-
-  private boolean checkWebhookAuthorization(User user, Webhook webhook) {
-    return checkWebhookAuthorization(user, webhook.ownerId());
-  }
-
-  private boolean checkWebhookAuthorization(User user, UUID webhookOwnerId) {
-    return webhookOwnerId.equals(user.id()) ||
-      user.organizations().contains(webhookOwnerId);
+    performWebhookOperation(findUserId(request), body.getString("webhook"),
+      webhook -> webhookDatabaseTable().deleteWebhook(webhook.id()), () -> {});
   }
 }

@@ -5,9 +5,8 @@ import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.taskwolf.core.access.TaskwolfRequestBody;
-import net.taskwolf.core.access.TaskwolfRestController;
 import net.taskwolf.core.iterator.AsyncIterator;
-import net.taskwolf.core.iterator.AsyncListIterator;
+import net.taskwolf.core.organization.team.TeamTargetDatabaseTable;
 import net.taskwolf.core.user.User;
 import net.taskwolf.core.user.UserDatabaseTable;
 import net.taskwolf.core.user.UserTargetDatabaseTable;
@@ -24,23 +23,20 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 @RestController
-public final class WebhookInformationController extends TaskwolfRestController {
-  private final WebhookDatabaseTable webhookDatabaseTable;
-  private final UserTargetDatabaseTable userTargetDatabaseTable;
+public final class WebhookInformationController extends WebhookController {
   private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
   private WebhookInformationController(
     Key secretKey, UserDatabaseTable userDatabaseTable,
     WebhookDatabaseTable webhookDatabaseTable,
-    UserTargetDatabaseTable userTargetDatabaseTable
+    UserTargetDatabaseTable userTargetDatabaseTable,
+    TeamTargetDatabaseTable teamTargetDatabaseTable
   ) {
-    super(secretKey, userDatabaseTable);
-    this.webhookDatabaseTable = webhookDatabaseTable;
-    this.userTargetDatabaseTable = userTargetDatabaseTable;
+    super(secretKey, userDatabaseTable, webhookDatabaseTable,
+      userTargetDatabaseTable, teamTargetDatabaseTable);
   }
 
   @RequestMapping(path = "/webhook/find/", method = RequestMethod.POST)
@@ -50,55 +46,19 @@ public final class WebhookInformationController extends TaskwolfRestController {
   ) {
     var body = TaskwolfRequestBody.of(payload, response);
     var futureResponse = new CompletableFuture<Map<String, Object>>();
-    findUser(request).thenAccept(user ->
-      webhookDatabaseTable.findWebhook(body.getString("webhook"))
-        .thenAccept(webhook -> findWebhook(user, webhook)
-          .thenAccept(futureResponse::complete)));
+    findUser(request).thenAccept(user -> performWebhookOperation(user,
+      body.getString("webhook"), webhook -> gatherWebhookInformation(webhook)
+        .thenAccept(futureResponse::complete),
+      () -> futureResponse.complete(Maps.newHashMap())));
     return futureResponse;
-  }
-
-  private CompletableFuture<Map<String, Object>> findWebhook(
-    User user, Webhook webhook
-  ) {
-    if (!checkWebhookAuthorization(user, webhook)) {
-      var futureResponse = new CompletableFuture<Map<String, Object>>();
-      futureResponse.complete(Maps.newHashMap());
-      return futureResponse;
-    }
-    return gatherWebhookInformation(webhook);
   }
 
   @RequestMapping(path = "/webhooks/selected/", method = RequestMethod.GET)
   public CompletableFuture<Map<String, Object>> selectedWebhooks(
     HttpServletRequest request
   ) {
-    var futureResponse = new CompletableFuture<Map<String, Object>>();
-    findUser(request).thenApply(user ->
-      userTargetDatabaseTable.findTargetSecured(user.id()).thenAccept(target ->
-        findSelectedWebhooks(user, target).thenApply(futureResponse::complete)));
-    return futureResponse;
-  }
-
-  private CompletableFuture<Map<String, Object>> findSelectedWebhooks(
-    User user, UUID ownerId
-  ) {
-    var futureResponse = new CompletableFuture<Map<String, Object>>();
-    if (!checkWebhookAuthorization(user, ownerId)) {
-      futureResponse.complete(Maps.newHashMap());
-      return futureResponse;
-    }
-    collectWebhooks(Lists.newArrayList(ownerId)).thenAccept(webhooks ->
-      collectWebhooksInformation(webhooks).thenAccept(futureResponse::complete));
-    return futureResponse;
-  }
-
-  private CompletableFuture<List<Webhook>> collectWebhooks(
-    List<UUID> ownerIds
-  ) {
-    var futureResponse = new CompletableFuture<List<Webhook>>();
-    AsyncListIterator.execute(ownerIds, webhookDatabaseTable::findWebhooksByOwner)
-      .thenAccept(futureResponse::complete);
-    return futureResponse;
+    return findUser(request).thenCompose(user -> findViewableWebhooks(user.id())
+      .thenCompose(this::collectWebhooksInformation));
   }
 
   private CompletableFuture<Map<String, Object>> collectWebhooksInformation(
@@ -142,15 +102,6 @@ public final class WebhookInformationController extends TaskwolfRestController {
     Calendar calendar = Calendar.getInstance();
     calendar.setTimeInMillis(milliseconds);
     return simpleDateFormat.format(calendar.getTime());
-  }
-
-  private boolean checkWebhookAuthorization(User user, Webhook webhook) {
-    return checkWebhookAuthorization(user, webhook.ownerId());
-  }
-
-  private boolean checkWebhookAuthorization(User user, UUID webhookOwnerId) {
-    return webhookOwnerId.equals(user.id()) ||
-      user.organizations().contains(webhookOwnerId);
   }
 }
 
