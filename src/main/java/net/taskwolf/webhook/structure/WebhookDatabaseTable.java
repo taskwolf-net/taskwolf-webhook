@@ -101,7 +101,7 @@ public final class WebhookDatabaseTable extends DatabaseTable {
   }
 
   public CompletableFuture<List<Webhook>> findWebhooksByOwner(UUID ownerId) {
-    return selectRows("owner=" + ownerId  + " ALLOW FILTERING").thenApply(rows ->
+    return selectRows("owner=" + ownerId).thenApply(rows ->
       rows.stream().map(Webhook::of).collect(Collectors.toList()));
   }
 }

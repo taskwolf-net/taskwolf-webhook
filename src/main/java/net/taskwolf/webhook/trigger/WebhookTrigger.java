@@ -56,6 +56,7 @@ public final class WebhookTrigger implements Trigger {
   @Override
   public void initialize() {
     contentDatabaseTable.createIfNotExists();
+    contentDatabaseTable.createIndexIfNotExists("webhook");
   }
 
   @Override
