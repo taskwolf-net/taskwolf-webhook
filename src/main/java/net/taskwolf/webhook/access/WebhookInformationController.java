@@ -79,7 +79,7 @@ public final class WebhookInformationController extends WebhookController {
   }
 
   @RequestMapping(path = "/webhooks/page/shift/", method = RequestMethod.POST)
-  public CompletableFuture<Map<String, Object>> findPreviousWebhookPage(
+  public CompletableFuture<Map<String, Object>> shiftWebhookPage(
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
