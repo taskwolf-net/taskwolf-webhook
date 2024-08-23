@@ -20,9 +20,6 @@ public class WebhookInjectionModule extends AbstractModule {
   WebhookDatabaseTable provideWebhookDatabaseTable(
     DatabaseConnection connection, DatabaseKeyspace keyspace
   ) {
-    var webhookDatabaseTable = WebhookDatabaseTable.create(connection, keyspace);
-    webhookDatabaseTable.createIfNotExists();
-    webhookDatabaseTable.createIndexIfNotExists("owner");
-    return webhookDatabaseTable;
+    return WebhookDatabaseTable.create(connection, keyspace);
   }
 }

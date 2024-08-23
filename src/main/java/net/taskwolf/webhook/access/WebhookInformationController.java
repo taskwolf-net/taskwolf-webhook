@@ -5,6 +5,9 @@ import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.taskwolf.core.access.TaskwolfRequestBody;
+import net.taskwolf.core.database.DatabaseDirection;
+import net.taskwolf.core.database.DatabaseOrder;
+import net.taskwolf.core.database.DatabasePage;
 import net.taskwolf.core.iterator.AsyncIterator;
 import net.taskwolf.core.organization.team.TeamTargetDatabaseTable;
 import net.taskwolf.core.user.User;
@@ -53,25 +56,79 @@ public final class WebhookInformationController extends WebhookController {
     return futureResponse;
   }
 
-  @RequestMapping(path = "/webhooks/selected/", method = RequestMethod.GET)
-  public CompletableFuture<Map<String, Object>> selectedWebhooks(
-    HttpServletRequest request
+  @RequestMapping(path = "/webhooks/page/", method = RequestMethod.POST)
+  public CompletableFuture<Map<String, Object>> findWebhookPage(
+    HttpServletRequest request, @RequestBody String payload,
+    HttpServletResponse response
   ) {
-    return findUser(request).thenCompose(user -> findViewableWebhooks(user.id())
-      .thenCompose(this::collectWebhooksInformation));
+    var body = TaskwolfRequestBody.of(payload, response);
+    var targetPage = body.getInt("targetPage");
+    var sortingColumn = body.getString("sorting");
+    var sortingOrder = DatabaseOrder.valueOf(body.getString("order"));
+    var search = body.getString("search");
+    var creatorId = body.has("creator") ? body.getUUID("creator") : null;
+    var startTime = body.has("startTime") ? body.getLong("startTime") : -1;
+    var endTime = body.has("endTime") ? body.getLong("endTime") : -1;
+    var minimumUsages = body.has("minimumUsages") ? body.getLong("minimumUsages") : -1;
+    var maximumUsages = body.has("maximumUsages") ? body.getLong("maximumUsages") : -1;
+    return findWebhookTarget(findUserId(request)).thenCompose(target ->
+      webhookDatabaseTable().findWebhooksOfOwner(target, targetPage,
+          sortingColumn, sortingOrder, search, creatorId, startTime, endTime,
+          minimumUsages, maximumUsages)
+        .thenCompose(this::collectWebhookInformation));
   }
 
-  private CompletableFuture<Map<String, Object>> collectWebhooksInformation(
-    List<Webhook> webhooks
+  @RequestMapping(path = "/webhooks/page/shift/", method = RequestMethod.POST)
+  public CompletableFuture<Map<String, Object>> findPreviousWebhookPage(
+    HttpServletRequest request, @RequestBody String payload,
+    HttpServletResponse response
   ) {
-    if (webhooks.isEmpty()) {
+    var body = TaskwolfRequestBody.of(payload, response);
+    var pageState = body.getString("pageState");
+    var startingPoint = DatabaseDirection.valueOf(body.getString("startingPoint"));
+    var direction = DatabaseDirection.valueOf(body.getString("direction"));
+    var sortingColumn = body.getString("sorting");
+    var sortingOrder = DatabaseOrder.valueOf(body.getString("order"));
+    var creatorId = body.has("creator") ? body.getUUID("creator") : null;
+    var startTime = body.has("startTime") ? body.getLong("startTime") : -1;
+    var endTime = body.has("endTime") ? body.getLong("endTime") : -1;
+    var minimumUsages = body.has("minimumUsages") ? body.getLong("minimumUsages") : -1;
+    var maximumUsages = body.has("maximumUsages") ? body.getLong("maximumUsages") : -1;
+    return findWebhookTarget(findUserId(request)).thenCompose(target ->
+      webhookDatabaseTable().findWebhooksOfOwner(target, pageState,
+          startingPoint, direction, sortingColumn, sortingOrder, creatorId,
+          startTime, endTime, minimumUsages, maximumUsages)
+        .thenCompose(this::collectWebhookInformation));
+  }
+
+  private CompletableFuture<Map<String, Object>> collectWebhookInformation(
+    DatabasePage<Webhook> page
+  ) {
+    if (page.content().isEmpty()) {
       return CompletableFuture.completedFuture(Map.of("webhooks",
-        Lists.newArrayList()));
+        Lists.newArrayList(), "page", page.pageState(), "pageNumber", 0));
     }
     var futureResponse = new CompletableFuture<Map<String, Object>>();
-    AsyncIterator.execute(webhooks, this::gatherWebhookInformation).thenAccept(
-      information -> futureResponse.complete(Map.of("webhooks", information)));
+    AsyncIterator.execute(page.content(), this::gatherWebhookInformation)
+      .thenApply(information -> reconstructWebhookOrder(page, information))
+      .thenAccept(information -> futureResponse.complete(Map.of("webhooks",
+        information, "page", page.pageState(), "pageNumber", page.pageNumber())));
     return futureResponse;
+  }
+
+  private List<Map<String, Object>> reconstructWebhookOrder(
+    DatabasePage<Webhook> page, List<Map<String, Object>> information
+  ) {
+    var result = Lists.<Map<String, Object>>newArrayList();
+    for (var webhook : page.content()) {
+      for (var entry : information) {
+        if (webhook.id().toString().equals(entry.get("id").toString())) {
+          result.add(entry);
+          break;
+        }
+      }
+    }
+    return result;
   }
 
   private CompletableFuture<Map<String, Object>> gatherWebhookInformation(

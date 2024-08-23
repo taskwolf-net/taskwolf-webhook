@@ -75,8 +75,8 @@ public final class WebhookModificationController extends WebhookController {
   private CompletableFuture<Boolean> checkWebhookNumberLimit(User user, UUID target) {
     return findOwnersOfTarget(user, target)
       .thenCompose(owners -> AsyncIterator.execute(owners, owner ->
-          webhookDatabaseTable().findWebhooksByOwner(owner).thenApply(List::size))
-        .thenApply(sizes -> sizes.stream().mapToInt(Integer::intValue).sum())
+          webhookDatabaseTable().findWebhookCount(owner))
+        .thenApply(sizes -> sizes.stream().mapToLong(Long::longValue).sum())
         .thenCompose(number -> bundleDatabaseTable.findBundle(target)
           .thenApply(bundle ->  bundle.webhookNumberLimit() > 0 &&
             number >= bundle.webhookNumberLimit())));
@@ -99,8 +99,8 @@ public final class WebhookModificationController extends WebhookController {
       return;
     }
     var created = System.currentTimeMillis();
-    webhookDatabaseTable().insertWebhook(webhookId, creator.id(), ownerId, created,
-      name, 0, createWebhookKey());
+    webhookDatabaseTable().insertWebhook(ownerId, webhookId, creator.id(),
+      created, name, 0, createWebhookKey());
   }
 
   @RequestMapping(path = "/webhook/trigger/{id}/", method = RequestMethod.POST)

@@ -20,7 +20,7 @@ public class WebhookComponentSelect implements InputComponentSelect {
   public CompletableFuture<List<String>> compile(
     User user, UUID id, Map<String, String> previousInputs
   ) {
-    return webhookDatabaseTable.findWebhooksByOwner(id).thenApply(webhooks ->
+    return webhookDatabaseTable.findAllWebhooksOfOwner(id).thenApply(webhooks ->
       webhooks.stream().map(webhook -> new JSONObject(Map.of("identifier",
           webhook.id(), "name", webhook.name())).toString())
         .collect(Collectors.toList()));

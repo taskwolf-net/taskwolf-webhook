@@ -96,17 +96,16 @@ public class WebhookController extends TaskwolfRestController {
         uuid.equals(webhookOwnerId)).orElse(false));
   }
 
-  protected CompletableFuture<List<Webhook>> findViewableWebhooks(UUID userId) {
+  protected CompletableFuture<UUID> findWebhookTarget(UUID userId) {
     return userTargetDatabaseTable.findTargetSecured(userId)
-      .thenCompose(target -> findViewableWebhooks(userId, target));
+      .thenCompose(target -> findWebhookTarget(userId, target));
   }
 
-  protected CompletableFuture<List<Webhook>> findViewableWebhooks(
+  private CompletableFuture<UUID> findWebhookTarget(
     UUID userId, UUID target
   ) {
-    return userId.equals(target) ?
-      webhookDatabaseTable.findWebhooksByOwner(target) :
-      teamTargetDatabaseTable.findTargetSecured(userId).thenCompose(team ->
-        webhookDatabaseTable.findWebhooksByOwner(team.orElse(target)));
+    return userId.equals(target) ? CompletableFuture.completedFuture(target) :
+      teamTargetDatabaseTable.findTargetSecured(userId)
+        .thenApply(team -> team.orElse(target));
   }
 }
