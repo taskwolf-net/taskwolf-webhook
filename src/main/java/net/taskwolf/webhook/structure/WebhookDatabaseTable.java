@@ -2,6 +2,11 @@ package net.taskwolf.webhook.structure;
 
 import com.google.common.collect.Lists;
 import net.taskwolf.core.database.*;
+import net.taskwolf.core.database.condition.DatabaseComparison;
+import net.taskwolf.core.database.condition.DatabaseCondition;
+import net.taskwolf.core.database.paging.DatabaseDirection;
+import net.taskwolf.core.database.paging.DatabaseOrder;
+import net.taskwolf.core.database.paging.DatabasePage;
 
 import java.util.List;
 import java.util.Random;
@@ -84,14 +89,14 @@ public final class WebhookDatabaseTable extends DatabaseTable {
   }
 
   private void updateWebhook(Webhook webhook) {
-    update("owner=" + webhook.ownerId() + " AND id='" + webhook.id() + "'",
+    update(DatabaseCondition.of("owner", webhook.ownerId(), "id", webhook.id()),
       DatabaseRow.of(webhook.ownerId(), webhook.id(), webhook.creatorId(),
         webhook.created(), webhook.name(), webhook.usages(), webhook.key()));
   }
 
   public void deleteWebhook(String webhookId) {
     findWebhook(webhookId).thenAccept(webhook ->
-      delete("owner=" + webhook.ownerId() + " AND id='" + webhook.id() + "'"));
+      delete(DatabaseCondition.of("owner", webhook.ownerId(), "id", webhook.id())));
   }
 
   public CompletableFuture<String> generateAvailableWebhookId() {
@@ -114,11 +119,11 @@ public final class WebhookDatabaseTable extends DatabaseTable {
   }
 
   public CompletableFuture<Boolean> webhookExists(String webhookId) {
-    return exists("id='" + webhookId + "'");
+    return exists(DatabaseCondition.of("id", webhookId));
   }
 
   public CompletableFuture<Webhook> findWebhook(String webhookId) {
-    return selectRow("id='" + webhookId + "'").thenApply(row ->
+    return selectRow(DatabaseCondition.of("id", webhookId)).thenApply(row ->
       Webhook.of(row, this));
   }
 
@@ -130,8 +135,9 @@ public final class WebhookDatabaseTable extends DatabaseTable {
     long minimumUsages, long maximumUsages
   ) {
     if (!search.isEmpty()) {
-      return selectRows("owner=" + ownerId + " AND name LIKE '%" + search +
-        "%' LIMIT " + PAGE_SIZE)
+      var condition = DatabaseCondition.of(DatabaseComparison.create("owner", ownerId),
+        DatabaseComparison.create("name", "%" + search + "%", DatabaseComparison.Type.LIKE));
+      return selectRows(condition, PAGE_SIZE)
         .thenApply(rows -> createWebhookPage(DatabasePage.create(rows, "", 1), this));
     }
     var view = findTargetView(sortingColumn);
@@ -149,9 +155,8 @@ public final class WebhookDatabaseTable extends DatabaseTable {
     long maximumUsages
   ) {
     var view = findTargetView(sortingColumn);
-    return view.shiftPage(DatabaseCell.create(ownerId),
-        createWebhookConditions(creatorId, startTime, endTime, minimumUsages,
-          maximumUsages),
+    return view.shiftPage(ownerId, createWebhookConditions(creatorId, startTime,
+          endTime, minimumUsages, maximumUsages),
         sortingOrder, PAGE_SIZE, pageState, startingPoint, direction)
       .thenApply(page -> createWebhookPage(page, view));
   }
@@ -169,27 +174,31 @@ public final class WebhookDatabaseTable extends DatabaseTable {
     return null;
   }
 
-  private List<String> createWebhookConditions(
+  private DatabaseCondition createWebhookConditions(
     UUID creatorId, long startTime, long endTime, long minimumUsages,
     long maximumUsages
   ) {
-    var conditions = Lists.<String>newArrayList();
+    var comparisons = Lists.<DatabaseComparison>newArrayList();
     if (creatorId != null) {
-      conditions.add("creator = " + creatorId);
+      comparisons.add(DatabaseComparison.create("creator", creatorId));
     }
     if (startTime > 0) {
-      conditions.add("created >= " + startTime);
+      comparisons.add(DatabaseComparison.create("created", startTime,
+        DatabaseComparison.Type.GREATER_EQUALS));
     }
     if (endTime > 0) {
-      conditions.add("created <= " + endTime);
+      comparisons.add(DatabaseComparison.create("created", endTime,
+        DatabaseComparison.Type.SMALLER_EQUALS));
     }
     if (minimumUsages > 0) {
-      conditions.add("usages >= " + minimumUsages);
+      comparisons.add(DatabaseComparison.create("usages", minimumUsages,
+        DatabaseComparison.Type.GREATER_EQUALS));
     }
     if (maximumUsages > 0) {
-      conditions.add("usages <= " + maximumUsages);
+      comparisons.add(DatabaseComparison.create("usages", maximumUsages,
+        DatabaseComparison.Type.SMALLER_EQUALS));
     }
-    return conditions;
+    return DatabaseCondition.create(comparisons);
   }
 
   private DatabasePage<Webhook> createWebhookPage(
@@ -201,11 +210,11 @@ public final class WebhookDatabaseTable extends DatabaseTable {
   }
 
   public CompletableFuture<Long> findWebhookCount(UUID ownerId) {
-    return count("owner=" + ownerId);
+    return count(DatabaseCondition.of("owner", ownerId));
   }
 
   public CompletableFuture<List<Webhook>> findAllWebhooksOfOwner(UUID ownerId) {
-    return selectRows("owner=" + ownerId).thenApply(rows ->
+    return selectRows(DatabaseCondition.of("owner", ownerId)).thenApply(rows ->
       rows.stream().map(row -> Webhook.of(row, this)).toList());
   }
 }

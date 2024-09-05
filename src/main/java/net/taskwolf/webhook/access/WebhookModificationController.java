@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import net.taskwolf.core.CoreModule;
 import net.taskwolf.core.access.TaskwolfRequestBody;
+import net.taskwolf.core.database.condition.DatabaseCondition;
 import net.taskwolf.core.iterator.AsyncIterator;
 import net.taskwolf.core.organization.team.Team;
 import net.taskwolf.core.organization.team.TeamDatabaseTable;
@@ -145,7 +146,7 @@ public final class WebhookModificationController extends WebhookController {
       "webhookFormattedTime", webhookTime.format(new Date(time)),
       "webhookFormattedDate", webhookDate.format(time), "webhookUnixTime", time);
     coreModule.triggerWorkflows("webhook", "webhook-trigger",
-      "webhook='" + webhook.id() + "'", information);
+      DatabaseCondition.of("webhook", webhook.id()), information);
     webhookDatabaseTable().useWebhook(webhook);
   }
 
