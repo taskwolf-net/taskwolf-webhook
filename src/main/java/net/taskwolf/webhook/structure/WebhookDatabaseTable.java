@@ -141,9 +141,8 @@ public final class WebhookDatabaseTable extends DatabaseTable {
         .thenApply(rows -> createWebhookPage(DatabasePage.create(rows, "", 1), this));
     }
     var view = findTargetView(sortingColumn);
-    return view.selectPage(DatabaseCell.create(ownerId),
-        createWebhookConditions(creatorId, startTime, endTime, minimumUsages,
-          maximumUsages),
+    return view.selectPage(ownerId, createWebhookConditions(creatorId, startTime,
+          endTime, minimumUsages, maximumUsages),
         sortingOrder, PAGE_SIZE, targetPage)
       .thenApply(page -> createWebhookPage(page, view));
   }
