@@ -1,22 +1,22 @@
-package net.taskwolf.webhook.access;
+package com.dulno.webhook.access;
 
+import com.dulno.webhook.structure.Webhook;
+import com.dulno.webhook.structure.WebhookDatabaseTable;
+import com.dulno.webhook.structure.WebhookURL;
 import com.google.common.collect.Lists;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import net.taskwolf.core.CoreModule;
-import net.taskwolf.core.access.TaskwolfRequestBody;
-import net.taskwolf.core.database.condition.DatabaseCondition;
-import net.taskwolf.core.iterator.AsyncIterator;
-import net.taskwolf.core.organization.team.Team;
-import net.taskwolf.core.organization.team.TeamDatabaseTable;
-import net.taskwolf.core.organization.team.TeamTargetDatabaseTable;
-import net.taskwolf.core.user.User;
-import net.taskwolf.core.user.UserDatabaseTable;
-import net.taskwolf.core.user.UserTargetDatabaseTable;
-import net.taskwolf.webhook.structure.Webhook;
-import net.taskwolf.webhook.structure.WebhookDatabaseTable;
-import net.taskwolf.webhook.structure.WebhookURL;
-import net.taskwolf.core.bundle.BundleDatabaseTable;
+import com.dulno.core.CoreModule;
+import com.dulno.core.access.DulnoRequestBody;
+import com.dulno.core.database.condition.DatabaseCondition;
+import com.dulno.core.iterator.AsyncIterator;
+import com.dulno.core.organization.team.Team;
+import com.dulno.core.organization.team.TeamDatabaseTable;
+import com.dulno.core.organization.team.TeamTargetDatabaseTable;
+import com.dulno.core.user.User;
+import com.dulno.core.user.UserDatabaseTable;
+import com.dulno.core.user.UserTargetDatabaseTable;
+import com.dulno.core.bundle.BundleDatabaseTable;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Key;
@@ -56,7 +56,7 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = TaskwolfRequestBody.of(payload, response);
+    var body = DulnoRequestBody.of(payload, response);
     return findUser(request).thenCompose(user ->
       userTargetDatabaseTable().findTargetSecured(user.id()).thenCompose(target ->
         findWebhookOwner(user, target).thenCompose(owner ->
@@ -128,7 +128,7 @@ public final class WebhookModificationController extends WebhookController {
   }
 
   public void triggerWebhook(
-    Webhook webhook, String key, String body, HttpServletResponse response
+          Webhook webhook, String key, String body, HttpServletResponse response
   ) {
     if (!webhook.key().equals(key)) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -155,7 +155,7 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = TaskwolfRequestBody.of(payload, response);
+    var body = DulnoRequestBody.of(payload, response);
     var webhookId = body.getString("webhook");
     performWebhookOperation(findUserId(request), body.getString("webhook"),
       webhook -> webhookDatabaseTable().renameWebhook(webhook,
@@ -167,7 +167,7 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = TaskwolfRequestBody.of(payload, response);
+    var body = DulnoRequestBody.of(payload, response);
     var futureResponse = new CompletableFuture<Map<String, Object>>();
     performWebhookOperation(findUserId(request), body.getString("webhook"),
       webhook -> futureResponse.complete(regenerateWebhookKey(webhook)),
@@ -198,7 +198,7 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = TaskwolfRequestBody.of(payload, response);
+    var body = DulnoRequestBody.of(payload, response);
     performWebhookOperation(findUserId(request), body.getString("webhook"),
       webhook -> webhookDatabaseTable().deleteWebhook(webhook.id()), () -> {});
   }

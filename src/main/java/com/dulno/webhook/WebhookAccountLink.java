@@ -1,8 +1,8 @@
-package net.taskwolf.webhook;
+package com.dulno.webhook;
 
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
-import net.taskwolf.core.account.AccountLink;
+import com.dulno.core.account.AccountLink;
 
 import java.util.List;
 import java.util.UUID;

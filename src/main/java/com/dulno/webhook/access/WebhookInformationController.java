@@ -1,21 +1,21 @@
-package net.taskwolf.webhook.access;
+package com.dulno.webhook.access;
 
+import com.dulno.webhook.structure.Webhook;
+import com.dulno.webhook.structure.WebhookDatabaseTable;
+import com.dulno.webhook.structure.WebhookURL;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import net.taskwolf.core.access.TaskwolfRequestBody;
-import net.taskwolf.core.database.paging.DatabaseDirection;
-import net.taskwolf.core.database.paging.DatabaseOrder;
-import net.taskwolf.core.database.paging.DatabasePage;
-import net.taskwolf.core.iterator.AsyncIterator;
-import net.taskwolf.core.organization.team.TeamTargetDatabaseTable;
-import net.taskwolf.core.user.User;
-import net.taskwolf.core.user.UserDatabaseTable;
-import net.taskwolf.core.user.UserTargetDatabaseTable;
-import net.taskwolf.webhook.structure.Webhook;
-import net.taskwolf.webhook.structure.WebhookDatabaseTable;
-import net.taskwolf.webhook.structure.WebhookURL;
+import com.dulno.core.access.DulnoRequestBody;
+import com.dulno.core.database.paging.DatabaseDirection;
+import com.dulno.core.database.paging.DatabaseOrder;
+import com.dulno.core.database.paging.DatabasePage;
+import com.dulno.core.iterator.AsyncIterator;
+import com.dulno.core.organization.team.TeamTargetDatabaseTable;
+import com.dulno.core.user.User;
+import com.dulno.core.user.UserDatabaseTable;
+import com.dulno.core.user.UserTargetDatabaseTable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -47,7 +47,7 @@ public final class WebhookInformationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = TaskwolfRequestBody.of(payload, response);
+    var body = DulnoRequestBody.of(payload, response);
     var futureResponse = new CompletableFuture<Map<String, Object>>();
     findUser(request).thenAccept(user -> performWebhookOperation(user,
       body.getString("webhook"), webhook -> gatherWebhookInformation(webhook)
@@ -61,7 +61,7 @@ public final class WebhookInformationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = TaskwolfRequestBody.of(payload, response);
+    var body = DulnoRequestBody.of(payload, response);
     var targetPage = body.getInt("targetPage");
     var sortingColumn = body.getString("sorting");
     var sortingOrder = DatabaseOrder.valueOf(body.getString("order"));
@@ -83,7 +83,7 @@ public final class WebhookInformationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = TaskwolfRequestBody.of(payload, response);
+    var body = DulnoRequestBody.of(payload, response);
     var pageState = body.getString("pageState");
     var startingPoint = DatabaseDirection.valueOf(body.getString("startingPoint"));
     var direction = DatabaseDirection.valueOf(body.getString("direction"));

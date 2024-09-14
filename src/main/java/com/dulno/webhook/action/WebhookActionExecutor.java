@@ -1,10 +1,10 @@
-package net.taskwolf.webhook.action;
+package com.dulno.webhook.action;
 
 import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
-import net.taskwolf.core.action.ActionExecutor;
-import net.taskwolf.core.action.ActionResult;
-import net.taskwolf.core.workflow.placeholder.PlaceholderDissolve;
+import com.dulno.core.action.ActionExecutor;
+import com.dulno.core.action.ActionResult;
+import com.dulno.core.workflow.placeholder.PlaceholderDissolve;
 
 import java.net.URI;
 import java.net.http.HttpClient;

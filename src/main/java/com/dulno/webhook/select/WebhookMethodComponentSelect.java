@@ -1,9 +1,9 @@
-package net.taskwolf.webhook.select;
+package com.dulno.webhook.select;
 
 import lombok.RequiredArgsConstructor;
-import net.taskwolf.core.user.User;
-import net.taskwolf.core.workflow.component.input.InputComponentSelect;
-import net.taskwolf.core.workflow.component.input.InputComponentSelectEntry;
+import com.dulno.core.user.User;
+import com.dulno.core.workflow.component.input.InputComponentSelect;
+import com.dulno.core.workflow.component.input.InputComponentSelectEntry;
 import org.json.JSONObject;
 
 import java.util.List;

@@ -1,11 +1,11 @@
-package net.taskwolf.webhook.structure;
+package com.dulno.webhook.structure;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import net.taskwolf.core.database.DatabaseColumn;
-import net.taskwolf.core.database.DatabaseRow;
-import net.taskwolf.core.database.DatabaseTable;
+import com.dulno.core.database.DatabaseColumn;
+import com.dulno.core.database.DatabaseRow;
+import com.dulno.core.database.DatabaseTable;
 
 import java.util.List;
 import java.util.UUID;

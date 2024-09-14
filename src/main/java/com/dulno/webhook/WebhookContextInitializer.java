@@ -1,10 +1,10 @@
-package net.taskwolf.webhook;
+package com.dulno.webhook;
 
+import com.dulno.webhook.structure.WebhookDatabaseTable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 

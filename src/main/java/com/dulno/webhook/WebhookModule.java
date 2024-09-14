@@ -1,22 +1,22 @@
-package net.taskwolf.webhook;
+package com.dulno.webhook;
 
+import com.dulno.webhook.select.WebhookMethodComponentSelect;
+import com.dulno.webhook.structure.WebhookDatabaseTable;
+import com.dulno.webhook.trigger.WebhookTrigger;
 import com.google.inject.Injector;
-import net.taskwolf.core.account.AccountLink;
-import net.taskwolf.core.action.ActionRepository;
-import net.taskwolf.core.database.DatabaseConnection;
-import net.taskwolf.core.database.DatabaseKeyspace;
-import net.taskwolf.core.log.Log;
-import net.taskwolf.core.module.Module;
-import net.taskwolf.core.module.ModuleDescription;
-import net.taskwolf.core.module.ModuleInformation;
-import net.taskwolf.core.module.ModuleLoadPriority;
-import net.taskwolf.core.trigger.TriggerRepository;
-import net.taskwolf.core.workflow.component.input.InputComponentSelect;
-import net.taskwolf.webhook.action.WebhookAction;
-import net.taskwolf.webhook.select.WebhookComponentSelect;
-import net.taskwolf.webhook.select.WebhookMethodComponentSelect;
-import net.taskwolf.webhook.structure.WebhookDatabaseTable;
-import net.taskwolf.webhook.trigger.WebhookTrigger;
+import com.dulno.core.account.AccountLink;
+import com.dulno.core.action.ActionRepository;
+import com.dulno.core.database.DatabaseConnection;
+import com.dulno.core.database.DatabaseKeyspace;
+import com.dulno.core.log.Log;
+import com.dulno.core.module.Module;
+import com.dulno.core.module.ModuleDescription;
+import com.dulno.core.module.ModuleInformation;
+import com.dulno.core.module.ModuleLoadPriority;
+import com.dulno.core.trigger.TriggerRepository;
+import com.dulno.core.workflow.component.input.InputComponentSelect;
+import com.dulno.webhook.action.WebhookAction;
+import com.dulno.webhook.select.WebhookComponentSelect;
 import org.springframework.boot.SpringApplication;
 
 @ModuleDescription(name = "webhook", version = "1.0.0-SNAPSHOT",

@@ -1,15 +1,15 @@
-package net.taskwolf.webhook.action;
+package com.dulno.webhook.action;
 
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
-import net.taskwolf.core.action.Action;
-import net.taskwolf.core.action.ActionContentDatabaseTable;
-import net.taskwolf.core.action.ActionInformation;
-import net.taskwolf.core.database.*;
-import net.taskwolf.core.workflow.component.input.InputComponentDataType;
-import net.taskwolf.core.workflow.component.input.InputComponentSelect;
-import net.taskwolf.core.workflow.component.input.InputComponentVariable;
-import net.taskwolf.core.workflow.component.output.OutputComponentVariable;
+import com.dulno.core.action.Action;
+import com.dulno.core.action.ActionContentDatabaseTable;
+import com.dulno.core.action.ActionInformation;
+import com.dulno.core.database.*;
+import com.dulno.core.workflow.component.input.InputComponentDataType;
+import com.dulno.core.workflow.component.input.InputComponentSelect;
+import com.dulno.core.workflow.component.input.InputComponentVariable;
+import com.dulno.core.workflow.component.output.OutputComponentVariable;
 
 import java.util.Map;
 import java.util.UUID;
