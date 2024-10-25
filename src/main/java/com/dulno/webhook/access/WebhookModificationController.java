@@ -62,7 +62,7 @@ public final class WebhookModificationController extends WebhookController {
         findWebhookOwner(user, target).thenCompose(owner ->
           webhookDatabaseTable().generateAvailableWebhookId().thenCompose(id ->
             checkWebhookNumberLimit(user, target).thenAccept(limitReached ->
-              addWebhook(user, owner, body.getString("name"), id, limitReached,
+              addWebhook(user, owner, body.getString("name", 64), id, limitReached,
                 response))))));
   }
 
@@ -128,7 +128,7 @@ public final class WebhookModificationController extends WebhookController {
   }
 
   public void triggerWebhook(
-          Webhook webhook, String key, String body, HttpServletResponse response
+    Webhook webhook, String key, String body, HttpServletResponse response
   ) {
     if (!webhook.key().equals(key)) {
       response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -156,10 +156,9 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletResponse response
   ) {
     var body = DulnoRequestBody.of(payload, response);
-    var webhookId = body.getString("webhook");
     performWebhookOperation(findUserId(request), body.getString("webhook"),
       webhook -> webhookDatabaseTable().renameWebhook(webhook,
-        body.getString("name")), () -> {});
+        body.getString("name", 64)), () -> {});
   }
 
   @RequestMapping(path = "/webhook/key/regenerate/", method = RequestMethod.POST)
