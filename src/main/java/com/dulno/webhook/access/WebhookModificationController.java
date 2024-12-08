@@ -4,6 +4,7 @@ import com.dulno.webhook.structure.Webhook;
 import com.dulno.webhook.structure.WebhookDatabaseTable;
 import com.dulno.webhook.structure.WebhookURL;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import com.dulno.core.CoreModule;
@@ -52,7 +53,7 @@ public final class WebhookModificationController extends WebhookController {
   }
 
   @RequestMapping(path = "/webhook/add/", method = RequestMethod.POST)
-  public CompletableFuture<Void> addWebhook(
+  public CompletableFuture<Map<String, Object>> addWebhook(
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
@@ -61,7 +62,7 @@ public final class WebhookModificationController extends WebhookController {
       userTargetDatabaseTable().findTargetSecured(user.id()).thenCompose(target ->
         findWebhookOwner(user, target).thenCompose(owner ->
           webhookDatabaseTable().generateAvailableWebhookId().thenCompose(id ->
-            checkWebhookNumberLimit(user, target).thenAccept(limitReached ->
+            checkWebhookNumberLimit(user, target).thenCompose(limitReached ->
               addWebhook(user, owner, body.getString("name", 64), id, limitReached,
                 response))))));
   }
@@ -91,17 +92,18 @@ public final class WebhookModificationController extends WebhookController {
           Stream.of(target)).toList());
   }
 
-  private void addWebhook(
+  private CompletableFuture<Map<String, Object>> addWebhook(
     User creator, UUID ownerId, String name, String webhookId,
     boolean limitReached, HttpServletResponse response
   ) {
     if (limitReached) {
       response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-      return;
+      return CompletableFuture.completedFuture(Maps.newHashMap());
     }
     var created = System.currentTimeMillis();
-    webhookDatabaseTable().insertWebhook(ownerId, webhookId, creator.id(),
-      created, name, 0, createWebhookKey());
+    return webhookDatabaseTable().insertWebhook(ownerId, webhookId, creator.id(),
+        created, name, 0, createWebhookKey())
+      .thenApply(value -> Map.of("webhook", webhookId));
   }
 
   @RequestMapping(path = "/webhook/trigger/{id}/", method = RequestMethod.POST)

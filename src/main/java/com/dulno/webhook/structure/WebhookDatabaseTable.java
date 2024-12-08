@@ -61,41 +61,43 @@ public final class WebhookDatabaseTable extends DatabaseTable {
     usageView = createMaterializedViewIfNotExists("usage_view", "usages");
   }
 
-  public void insertWebhook(Webhook webhook) {
-    insertWebhook(webhook.ownerId(), webhook.id(), webhook.creatorId(),
+  public CompletableFuture<Void> insertWebhook(Webhook webhook) {
+    return insertWebhook(webhook.ownerId(), webhook.id(), webhook.creatorId(),
       webhook.created(), webhook.name(), webhook.usages(), webhook.key());
   }
 
-  public void insertWebhook(
+  public CompletableFuture<Void> insertWebhook(
     UUID ownerId, String id, UUID creatorId, long created, String name,
     long usages, String key
   ) {
-    insert(DatabaseRow.of(ownerId, id, creatorId, created, name, usages, key));
+    return insert(DatabaseRow.of(ownerId, id, creatorId, created, name, usages,
+      key));
   }
 
-  public void useWebhook(Webhook webhook) {
+  public CompletableFuture<Void> useWebhook(Webhook webhook) {
     webhook.use();
-    updateWebhook(webhook);
+    return updateWebhook(webhook);
   }
 
-  public void renameWebhook(Webhook webhook, String name) {
+  public CompletableFuture<Void> renameWebhook(Webhook webhook, String name) {
     webhook.rename(name);
-    updateWebhook(webhook);
+    return updateWebhook(webhook);
   }
 
-  public void changeWebhookKey(Webhook webhook, String key) {
+  public CompletableFuture<Void> changeWebhookKey(Webhook webhook, String key) {
     webhook.changeKey(key);
-    updateWebhook(webhook);
+    return updateWebhook(webhook);
   }
 
-  private void updateWebhook(Webhook webhook) {
-    update(DatabaseCondition.of("owner", webhook.ownerId(), "id", webhook.id()),
-      DatabaseRow.of(webhook.ownerId(), webhook.id(), webhook.creatorId(),
-        webhook.created(), webhook.name(), webhook.usages(), webhook.key()));
+  private CompletableFuture<Void> updateWebhook(Webhook webhook) {
+    return update(DatabaseCondition.of("owner", webhook.ownerId(), "id",
+      webhook.id()), DatabaseRow.of(webhook.ownerId(), webhook.id(),
+      webhook.creatorId(), webhook.created(), webhook.name(), webhook.usages(),
+      webhook.key()));
   }
 
-  public void deleteWebhook(String webhookId) {
-    findWebhook(webhookId).thenAccept(webhook ->
+  public CompletableFuture<Void> deleteWebhook(String webhookId) {
+    return findWebhook(webhookId).thenAccept(webhook ->
       delete(DatabaseCondition.of("owner", webhook.ownerId(), "id", webhook.id())));
   }
 
