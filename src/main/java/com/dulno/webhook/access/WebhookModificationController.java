@@ -7,7 +7,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import com.dulno.core.CoreModule;
+import com.dulno.workflow.WorkflowModule;
 import com.dulno.core.access.DulnoRequestBody;
 import com.dulno.core.database.condition.DatabaseCondition;
 import com.dulno.core.iterator.AsyncIterator;
@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 public final class WebhookModificationController extends WebhookController {
   private final BundleDatabaseTable bundleDatabaseTable;
   private final TeamDatabaseTable teamDatabaseTable;
-  private final CoreModule coreModule;
+  private final WorkflowModule workflowModule;
   private final Random random = new Random();
   private final SimpleDateFormat webhookTime = new SimpleDateFormat("HH:mm:ss");
   private final SimpleDateFormat webhookDate = new SimpleDateFormat("dd.MM.yyyy");
@@ -41,13 +41,13 @@ public final class WebhookModificationController extends WebhookController {
     UserTargetDatabaseTable userTargetDatabaseTable,
     TeamTargetDatabaseTable teamTargetDatabaseTable,
     BundleDatabaseTable bundleDatabaseTable, TeamDatabaseTable teamDatabaseTable,
-    CoreModule coreModule
+    WorkflowModule workflowModule
   ) {
     super(secretKey, userDatabaseTable, webhookDatabaseTable,
       userTargetDatabaseTable, teamTargetDatabaseTable);
     this.bundleDatabaseTable = bundleDatabaseTable;
     this.teamDatabaseTable = teamDatabaseTable;
-    this.coreModule = coreModule;
+    this.workflowModule = workflowModule;
     this.webhookTime.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
     this.webhookDate.setTimeZone(TimeZone.getTimeZone("Europe/Berlin"));
   }
@@ -147,7 +147,7 @@ public final class WebhookModificationController extends WebhookController {
       "webhookUrl", WebhookURL.create(webhook).build(), "webhookBody", body,
       "webhookFormattedTime", webhookTime.format(new Date(time)),
       "webhookFormattedDate", webhookDate.format(time), "webhookUnixTime", time);
-    coreModule.triggerWorkflows("webhook", "webhook-trigger",
+    workflowModule.triggerWorkflows("webhook", "webhook-trigger",
       DatabaseCondition.of("webhook", webhook.id()), information);
     webhookDatabaseTable().useWebhook(webhook);
   }

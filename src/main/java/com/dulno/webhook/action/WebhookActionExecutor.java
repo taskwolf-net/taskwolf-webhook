@@ -2,9 +2,9 @@ package com.dulno.webhook.action;
 
 import com.google.common.collect.Maps;
 import lombok.AllArgsConstructor;
-import com.dulno.core.action.ActionExecutor;
-import com.dulno.core.action.ActionResult;
-import com.dulno.core.workflow.placeholder.PlaceholderDissolve;
+import com.dulno.workflow.action.ActionExecutor;
+import com.dulno.workflow.action.ActionResult;
+import com.dulno.workflow.placeholder.PlaceholderDissolve;
 
 import java.net.URI;
 import java.net.http.HttpClient;

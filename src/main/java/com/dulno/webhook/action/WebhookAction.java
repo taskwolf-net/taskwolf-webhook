@@ -2,14 +2,14 @@ package com.dulno.webhook.action;
 
 import com.google.common.collect.Lists;
 import lombok.AllArgsConstructor;
-import com.dulno.core.action.Action;
-import com.dulno.core.action.ActionContentDatabaseTable;
-import com.dulno.core.action.ActionInformation;
+import com.dulno.workflow.action.Action;
+import com.dulno.workflow.action.ActionContentDatabaseTable;
+import com.dulno.workflow.action.ActionInformation;
 import com.dulno.core.database.*;
-import com.dulno.core.workflow.component.input.InputComponentDataType;
-import com.dulno.core.workflow.component.input.InputComponentSelect;
-import com.dulno.core.workflow.component.input.InputComponentVariable;
-import com.dulno.core.workflow.component.output.OutputComponentVariable;
+import com.dulno.workflow.component.input.InputComponentDataType;
+import com.dulno.workflow.component.input.InputComponentSelect;
+import com.dulno.workflow.component.input.InputComponentVariable;
+import com.dulno.workflow.component.output.OutputComponentVariable;
 
 import java.util.Map;
 import java.util.UUID;
