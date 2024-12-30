@@ -68,7 +68,9 @@ public final class WebhookAction implements Action<WebhookActionExecutor> {
   }
 
   @Override
-  public CompletableFuture<Void> insert(UUID actionId, Map<String, Object> content) {
+  public CompletableFuture<Void> insert(
+    UUID actionId, UUID ownerId, Map<String, Object> content
+  ) {
     return contentDatabaseTable.insertContent(actionId, DatabaseRow.of(
       content.get("method"), content.get("url"), content.get("headers"),
       content.get("body")));

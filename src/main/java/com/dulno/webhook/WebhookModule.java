@@ -63,9 +63,10 @@ public final class WebhookModule extends Integration {
   public TriggerRepository triggerRepository() {
     var databaseConnection = injector().getInstance(DatabaseConnection.class);
     var databaseKeyspace = injector().getInstance(DatabaseKeyspace.class);
+    var webhookDatabaseTable = injector().getInstance(WebhookDatabaseTable.class);
     var repository = TriggerRepository.create();
-    repository.registerTrigger(WebhookTrigger.create(webhookComponentSelect,
-      databaseConnection, databaseKeyspace));
+    repository.registerTrigger(WebhookTrigger.create(webhookDatabaseTable,
+      webhookComponentSelect, databaseConnection, databaseKeyspace));
     return repository;
   }
 

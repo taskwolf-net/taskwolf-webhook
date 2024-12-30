@@ -1,5 +1,6 @@
 package com.dulno.webhook.trigger;
 
+import com.dulno.webhook.structure.WebhookDatabaseTable;
 import com.google.common.collect.Lists;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -20,16 +21,19 @@ import java.util.concurrent.CompletableFuture;
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public final class WebhookTrigger implements Trigger {
   public static WebhookTrigger create(
+    WebhookDatabaseTable webhookDatabaseTable,
     InputComponentSelect webhookComponentSelect,
     DatabaseConnection databaseConnection, DatabaseKeyspace databaseKeyspace
   ) {
     var contentColumns = Lists.<DatabaseColumn>newArrayList();
+    contentColumns.add(DatabaseColumn.create("owner", DatabaseDataType.UUID));
     contentColumns.add(DatabaseColumn.create("webhook", DatabaseDataType.TEXT));
-    return new WebhookTrigger(webhookComponentSelect,
+    return new WebhookTrigger(webhookDatabaseTable, webhookComponentSelect,
       TriggerContentDatabaseTable.create(databaseConnection, databaseKeyspace,
         "trigger_webhook", contentColumns));
   }
 
+  private final WebhookDatabaseTable webhookDatabaseTable;
   private final InputComponentSelect webhookComponentSelect;
   private final TriggerContentDatabaseTable contentDatabaseTable;
 
@@ -61,15 +65,36 @@ public final class WebhookTrigger implements Trigger {
   }
 
   @Override
-  public CompletableFuture<Void> insert(UUID triggerId, Map<String, Object> content) {
-    return contentDatabaseTable.insertContent(triggerId, DatabaseRow.of(
+  public CompletableFuture<Void> insert(
+    UUID triggerId, UUID ownerId, Map<String, Object> content
+  ) {
+    return contentDatabaseTable.insertContent(triggerId, DatabaseRow.of(ownerId,
       content.get("webhookIdentifier")));
+  }
+
+  @Override
+  public CompletableFuture<Boolean> checkExecution(UUID triggerId) {
+    return contentDatabaseTable.findContent(triggerId)
+      .thenCompose(row -> webhookDatabaseTable.webhookExists(
+        row.findCell(2).stringValue())
+        .thenCompose(exists -> checkExecution(row.findCell(1).uuidValue(),
+          row.findCell(2).stringValue(), exists)));
+  }
+
+  public CompletableFuture<Boolean> checkExecution(
+    UUID ownerId, String webhookId, boolean webhookExists
+  ) {
+    if (!webhookExists) {
+      return CompletableFuture.completedFuture(false);
+    }
+    return webhookDatabaseTable.findWebhook(webhookId)
+      .thenApply(webhook -> webhook.ownerId().equals(ownerId));
   }
 
   @Override
   public CompletableFuture<Map<String, Object>> findContent(UUID triggerId) {
     return contentDatabaseTable.findContent(triggerId).thenApply(row ->
-      Map.of("webhookIdentifier", row.findCell(1).stringValue()));
+      Map.of("webhookIdentifier", row.findCell(2).stringValue()));
   }
 
   @Override
