@@ -71,9 +71,11 @@ public final class WebhookAction implements Action<WebhookActionExecutor> {
   public CompletableFuture<Void> insert(
     UUID actionId, UUID ownerId, Map<String, Object> content
   ) {
+    var headers = content.get("headers");
+    var body = content.get("body");
     return contentDatabaseTable.insertContent(actionId, DatabaseRow.of(
-      content.get("method"), content.get("url"), content.get("headers"),
-      content.get("body")));
+      content.get("method"), content.get("url"), headers == null ? "" : headers,
+      body == null ? "" : body));
   }
 
   @Override
