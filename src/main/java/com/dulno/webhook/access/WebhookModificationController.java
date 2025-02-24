@@ -63,8 +63,8 @@ public final class WebhookModificationController extends WebhookController {
         findWebhookOwner(user, target).thenCompose(owner ->
           webhookDatabaseTable().generateAvailableWebhookId().thenCompose(id ->
             checkWebhookNumberLimit(user, target).thenCompose(limitReached ->
-              addWebhook(user, owner, body.getString("name", 64), id, limitReached,
-                response))))));
+              addWebhook(user, owner, body.getSanitizedString("name", 64), id,
+                limitReached, response))))));
   }
 
   private CompletableFuture<UUID> findWebhookOwner(User user, UUID target) {
@@ -160,7 +160,7 @@ public final class WebhookModificationController extends WebhookController {
     var body = DulnoRequestBody.of(payload, response);
     performWebhookOperation(findUserId(request), body.getString("webhook"),
       webhook -> webhookDatabaseTable().renameWebhook(webhook,
-        body.getString("name", 64)), () -> {});
+        body.getSanitizedString("name", 64)), () -> {});
   }
 
   @RequestMapping(path = "/webhook/key/regenerate/", method = RequestMethod.POST)
