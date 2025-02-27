@@ -148,7 +148,7 @@ public final class WebhookModificationController extends WebhookController {
       "webhookFormattedTime", webhookTime.format(new Date(time)),
       "webhookFormattedDate", webhookDate.format(time), "webhookUnixTime", time);
     workflowModule.triggerWorkflows("webhook", "webhook-trigger",
-      DatabaseCondition.of("webhook", webhook.id()), information);
+      DatabaseCondition.of("webhook", webhook.id()), information, false);
     webhookDatabaseTable().useWebhook(webhook);
   }
 
