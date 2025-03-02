@@ -1,5 +1,6 @@
 package com.dulno.webhook.access;
 
+import com.dulno.core.environment.DulnoEnvironment;
 import com.dulno.webhook.structure.Webhook;
 import com.dulno.webhook.structure.WebhookDatabaseTable;
 import com.dulno.webhook.structure.WebhookURL;
@@ -30,16 +31,19 @@ import java.util.concurrent.CompletableFuture;
 
 @RestController
 public final class WebhookInformationController extends WebhookController {
+  private final DulnoEnvironment environment;
   private final SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
   private WebhookInformationController(
     Key secretKey, UserDatabaseTable userDatabaseTable,
     WebhookDatabaseTable webhookDatabaseTable,
     UserTargetDatabaseTable userTargetDatabaseTable,
-    TeamTargetDatabaseTable teamTargetDatabaseTable
+    TeamTargetDatabaseTable teamTargetDatabaseTable,
+    DulnoEnvironment environment
   ) {
     super(secretKey, userDatabaseTable, webhookDatabaseTable,
       userTargetDatabaseTable, teamTargetDatabaseTable);
+    this.environment = environment;
   }
 
   @RequestMapping(path = "/webhook/find/", method = RequestMethod.POST)
@@ -147,7 +151,7 @@ public final class WebhookInformationController extends WebhookController {
     var information = Maps.<String, Object>newHashMap();
     information.put("id", webhook.id());
     information.put("name", webhook.name());
-    information.put("url", WebhookURL.create(webhook).build());
+    information.put("url", WebhookURL.create(environment, webhook).build());
     information.put("usages", webhook.usages());
     information.put("created", timeMillisecondsToDate(webhook.created()));
     information.put("creator", creator.name());
