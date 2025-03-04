@@ -124,6 +124,10 @@ public final class WebhookDatabaseTable extends DatabaseTable {
     return exists(DatabaseCondition.of("id", webhookId));
   }
 
+  public CompletableFuture<Boolean> webhookExistsByOwner(UUID ownerId) {
+    return exists(DatabaseCondition.of("owner", ownerId));
+  }
+
   public CompletableFuture<Webhook> findWebhook(String webhookId) {
     return selectRow(DatabaseCondition.of("id", webhookId)).thenApply(row ->
       Webhook.of(row, this));

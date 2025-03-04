@@ -37,9 +37,9 @@ public final class WebhookModule extends Integration {
     log = injector().getInstance(Log.class).subLog("Webhook");
     injector().getInstance(SpringApplication.class).addInitializers(
       injector().getInstance(WebhookContextInitializer.class));
-    accountLink = WebhookAccountLink.create();
-    webhookComponentSelect = WebhookComponentSelect.create(
-      injector().getInstance(WebhookDatabaseTable.class));
+    var webhookDatabaseTable = injector().getInstance(WebhookDatabaseTable.class);
+    accountLink = WebhookAccountLink.create(webhookDatabaseTable);
+    webhookComponentSelect = WebhookComponentSelect.create(webhookDatabaseTable);
     webhookMethodComponentSelect = WebhookMethodComponentSelect.create();
   }
 
