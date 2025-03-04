@@ -1,5 +1,6 @@
 {
-  "webhook.link.description": "Great news! You don't need to link an account to use this module. Just click on \"skip\" to go to the next page.",
+  "webhook.link.description": "To create a new webhook, simply click on the logo. You can then return to the workflow.",
+
   "webhook.trigger.name": "Webhook",
   "webhook.trigger.description": "Is triggered when the webhook is called up",
   "webhook.trigger.input.webhook.name": "Webhook",

@@ -1,6 +1,7 @@
 package com.dulno.webhook;
 
 import com.dulno.core.account.AccountLinkEntry;
+import com.dulno.webhook.structure.WebhookDatabaseTable;
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
 import com.dulno.core.account.AccountLink;
@@ -11,9 +12,11 @@ import java.util.concurrent.CompletableFuture;
 
 @RequiredArgsConstructor(staticName = "create")
 public final class WebhookAccountLink implements AccountLink {
+  private final WebhookDatabaseTable webhookDatabaseTable;
+
   @Override
-  public CompletableFuture<Boolean> accountExists(UUID userId) {
-    return CompletableFuture.completedFuture(true);
+  public CompletableFuture<Boolean> accountExists(UUID id) {
+    return webhookDatabaseTable.webhookExistsByOwner(id);
   }
 
   @Override
@@ -28,7 +31,7 @@ public final class WebhookAccountLink implements AccountLink {
 
   @Override
   public String registrationUrl(UUID id, String apiKey) {
-    return "";
+    return "/webhook/add/";
   }
 
   @Override
