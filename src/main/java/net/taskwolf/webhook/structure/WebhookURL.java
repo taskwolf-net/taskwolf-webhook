@@ -1,11 +1,11 @@
-package com.dulno.webhook.structure;
+package net.taskwolf.webhook.structure;
 
-import com.dulno.core.environment.DulnoEnvironment;
+import net.taskwolf.core.environment.TaskwolfEnvironment;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor(staticName = "create")
 public final class WebhookURL {
-  private final DulnoEnvironment environment;
+  private final TaskwolfEnvironment environment;
   private final Webhook webhook;
 
   private static final String WEBHOOK_URL = "https://api.%s/v1/webhook/trigger/%s/";

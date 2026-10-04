@@ -1,15 +1,15 @@
-package com.dulno.webhook.access;
+package net.taskwolf.webhook.access;
 
-import com.dulno.core.access.DulnoRestController;
-import com.dulno.webhook.structure.Webhook;
-import com.dulno.webhook.structure.WebhookDatabaseTable;
+import net.taskwolf.core.access.TaskwolfRestController;
+import net.taskwolf.webhook.structure.Webhook;
+import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.experimental.Accessors;
-import com.dulno.core.organization.team.TeamTargetDatabaseTable;
-import com.dulno.core.user.User;
-import com.dulno.core.user.UserDatabaseTable;
-import com.dulno.core.user.UserTargetDatabaseTable;
+import net.taskwolf.core.organization.team.TeamTargetDatabaseTable;
+import net.taskwolf.core.user.User;
+import net.taskwolf.core.user.UserDatabaseTable;
+import net.taskwolf.core.user.UserTargetDatabaseTable;
 
 import java.security.Key;
 import java.util.UUID;
@@ -18,7 +18,7 @@ import java.util.function.Consumer;
 
 @Accessors(fluent = true)
 @Getter(AccessLevel.PROTECTED)
-public class WebhookController extends DulnoRestController {
+public class WebhookController extends TaskwolfRestController {
   private final WebhookDatabaseTable webhookDatabaseTable;
   private final UserTargetDatabaseTable userTargetDatabaseTable;
   private final TeamTargetDatabaseTable teamTargetDatabaseTable;

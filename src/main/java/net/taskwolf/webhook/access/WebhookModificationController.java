@@ -1,24 +1,24 @@
-package com.dulno.webhook.access;
+package net.taskwolf.webhook.access;
 
-import com.dulno.core.environment.DulnoEnvironment;
-import com.dulno.webhook.structure.Webhook;
-import com.dulno.webhook.structure.WebhookDatabaseTable;
-import com.dulno.webhook.structure.WebhookURL;
+import net.taskwolf.core.environment.TaskwolfEnvironment;
+import net.taskwolf.webhook.structure.Webhook;
+import net.taskwolf.webhook.structure.WebhookDatabaseTable;
+import net.taskwolf.webhook.structure.WebhookURL;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import com.dulno.workflow.WorkflowModule;
-import com.dulno.core.access.DulnoRequestBody;
-import com.dulno.core.database.condition.DatabaseCondition;
-import com.dulno.core.iterator.AsyncIterator;
-import com.dulno.core.organization.team.Team;
-import com.dulno.core.organization.team.TeamDatabaseTable;
-import com.dulno.core.organization.team.TeamTargetDatabaseTable;
-import com.dulno.core.user.User;
-import com.dulno.core.user.UserDatabaseTable;
-import com.dulno.core.user.UserTargetDatabaseTable;
-import com.dulno.core.bundle.BundleDatabaseTable;
+import net.taskwolf.workflow.WorkflowModule;
+import net.taskwolf.core.access.TaskwolfRequestBody;
+import net.taskwolf.core.database.condition.DatabaseCondition;
+import net.taskwolf.core.iterator.AsyncIterator;
+import net.taskwolf.core.organization.team.Team;
+import net.taskwolf.core.organization.team.TeamDatabaseTable;
+import net.taskwolf.core.organization.team.TeamTargetDatabaseTable;
+import net.taskwolf.core.user.User;
+import net.taskwolf.core.user.UserDatabaseTable;
+import net.taskwolf.core.user.UserTargetDatabaseTable;
+import net.taskwolf.core.bundle.BundleDatabaseTable;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Key;
@@ -32,7 +32,7 @@ public final class WebhookModificationController extends WebhookController {
   private final BundleDatabaseTable bundleDatabaseTable;
   private final TeamDatabaseTable teamDatabaseTable;
   private final WorkflowModule workflowModule;
-  private final DulnoEnvironment environment;
+  private final TaskwolfEnvironment environment;
   private final Random random = new Random();
   private final SimpleDateFormat webhookTime = new SimpleDateFormat("HH:mm:ss");
   private final SimpleDateFormat webhookDate = new SimpleDateFormat("dd.MM.yyyy");
@@ -43,7 +43,7 @@ public final class WebhookModificationController extends WebhookController {
     UserTargetDatabaseTable userTargetDatabaseTable,
     TeamTargetDatabaseTable teamTargetDatabaseTable,
     BundleDatabaseTable bundleDatabaseTable, TeamDatabaseTable teamDatabaseTable,
-    WorkflowModule workflowModule, DulnoEnvironment environment
+    WorkflowModule workflowModule, TaskwolfEnvironment environment
   ) {
     super(secretKey, userDatabaseTable, webhookDatabaseTable,
       userTargetDatabaseTable, teamTargetDatabaseTable);
@@ -60,7 +60,7 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = DulnoRequestBody.of(payload, response);
+    var body = TaskwolfRequestBody.of(payload, response);
     return findUser(request).thenCompose(user ->
       userTargetDatabaseTable().findTargetSecured(user.id()).thenCompose(target ->
         findWebhookOwner(user, target).thenCompose(owner ->
@@ -160,7 +160,7 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = DulnoRequestBody.of(payload, response);
+    var body = TaskwolfRequestBody.of(payload, response);
     performWebhookOperation(findUserId(request), body.getString("webhook"),
       webhook -> webhookDatabaseTable().renameWebhook(webhook,
         body.getSanitizedString("name", 64)), () -> {});
@@ -171,7 +171,7 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = DulnoRequestBody.of(payload, response);
+    var body = TaskwolfRequestBody.of(payload, response);
     var futureResponse = new CompletableFuture<Map<String, Object>>();
     performWebhookOperation(findUserId(request), body.getString("webhook"),
       webhook -> futureResponse.complete(regenerateWebhookKey(webhook)),
@@ -202,7 +202,7 @@ public final class WebhookModificationController extends WebhookController {
     HttpServletRequest request, @RequestBody String payload,
     HttpServletResponse response
   ) {
-    var body = DulnoRequestBody.of(payload, response);
+    var body = TaskwolfRequestBody.of(payload, response);
     performWebhookOperation(findUserId(request), body.getString("webhook"),
       webhook -> webhookDatabaseTable().deleteWebhook(webhook.id()), () -> {});
   }

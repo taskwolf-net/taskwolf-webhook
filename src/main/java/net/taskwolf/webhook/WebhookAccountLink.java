@@ -1,10 +1,10 @@
-package com.dulno.webhook;
+package net.taskwolf.webhook;
 
-import com.dulno.core.account.AccountLinkEntry;
-import com.dulno.webhook.structure.WebhookDatabaseTable;
+import net.taskwolf.core.account.AccountLinkEntry;
+import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import com.google.common.collect.Lists;
 import lombok.RequiredArgsConstructor;
-import com.dulno.core.account.AccountLink;
+import net.taskwolf.core.account.AccountLink;
 
 import java.util.List;
 import java.util.UUID;

@@ -1,17 +1,17 @@
-package com.dulno.webhook.trigger;
+package net.taskwolf.webhook.trigger;
 
-import com.dulno.webhook.structure.WebhookDatabaseTable;
+import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import com.google.common.collect.Lists;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import com.dulno.core.database.*;
-import com.dulno.workflow.trigger.Trigger;
-import com.dulno.workflow.trigger.TriggerContentDatabaseTable;
-import com.dulno.workflow.trigger.TriggerInformation;
-import com.dulno.core.database.condition.DatabaseCondition;
-import com.dulno.workflow.component.input.InputComponentSelect;
-import com.dulno.workflow.component.input.InputComponentVariable;
-import com.dulno.workflow.component.output.OutputComponentVariable;
+import net.taskwolf.core.database.*;
+import net.taskwolf.workflow.trigger.Trigger;
+import net.taskwolf.workflow.trigger.TriggerContentDatabaseTable;
+import net.taskwolf.workflow.trigger.TriggerInformation;
+import net.taskwolf.core.database.condition.DatabaseCondition;
+import net.taskwolf.workflow.component.input.InputComponentSelect;
+import net.taskwolf.workflow.component.input.InputComponentVariable;
+import net.taskwolf.workflow.component.output.OutputComponentVariable;
 
 import java.util.List;
 import java.util.Map;

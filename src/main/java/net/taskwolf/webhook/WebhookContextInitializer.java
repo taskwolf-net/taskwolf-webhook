@@ -1,6 +1,6 @@
-package com.dulno.webhook;
+package net.taskwolf.webhook;
 
-import com.dulno.webhook.structure.WebhookDatabaseTable;
+import net.taskwolf.webhook.structure.WebhookDatabaseTable;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.AccessLevel;
